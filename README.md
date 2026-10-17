@@ -104,6 +104,23 @@ npm run build
 npm run preview
 ```
 
+## GitHub Pages deployment
+
+The Pages address is `https://joppevos.github.io/value-study/`.
+In the repository settings, select Pages and set the deployment source to GitHub Actions.
+The deployment workflow tests the app, builds `dist`, and publishes successful builds after pushes to `main`.
+It reads the base path from GitHub Pages so that a future custom domain can use the site root.
+
+To test the production build under the repository path locally, run:
+
+```sh
+STILL_BASE_PATH=/value-study/ npm run build
+npm run test:pages
+```
+
+The deployment tests cover phone and iPad screen sizes, worker loading, export, installation files, and offline reload.
+A custom domain remains a future task in TODO.md. Saved studies do not automatically move between different hostnames.
+
 ## Tests and measurements
 
 Unit tests cover known pixels, image edges, source-color smoothing, palette limits, framing, chroma, histogram counts, and offline cache generation.

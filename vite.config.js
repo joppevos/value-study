@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 export default defineConfig({
+  base: process.env.STILL_BASE_PATH || '/',
   plugins: [{
     name: 'still-offline-shell',
     apply: 'build',
@@ -22,7 +23,9 @@ self.addEventListener('activate', event => event.waitUntil(caches.keys().then(ke
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(caches.open(CACHE).then(async cache => {
-    const cached = await cache.match(event.request);
+    // Only invariant public app files are cached. Origin-varying server headers
+    // must not prevent a cached module or stylesheet from loading offline.
+    const cached = await cache.match(event.request, { ignoreVary: true });
     if (cached) return cached;
     try { return await fetch(event.request); }
     catch (error) {

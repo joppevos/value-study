@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test src/*.test.js",
     "test:e2e": "playwright test",
-    "benchmark": "node scripts/benchmark.mjs"
+    "benchmark": "node scripts/benchmark.mjs",
+    "test:pages": "playwright test --config playwright.pages.config.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

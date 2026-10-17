@@ -9,6 +9,14 @@ The original feature backlog is implemented as of 2026-10-17. Four mobile releas
 The original single-image tools remain available. Extra composition, comparison, and storage tools live in collapsed sections.
 Relevant tests cover known pixels and image edges. Browser and device validation remain open at the end of this plan.
 
+## Hosting and custom domain
+
+- [ ] Publish the mobile beta at `https://joppevos.github.io/value-study/` through GitHub Pages.
+  Run unit tests, build the site at its deployment path, and test worker loading, PNG export, manifest paths, and offline reload before publishing.
+- [ ] Choose a custom domain or subdomain for Still before a wider release. Connect it to GitHub Pages and enable HTTPS.
+  Use the same hostname if hosting moves later. A different hostname does not automatically inherit locally saved studies or remembered adjustments.
+- [ ] Plan the move from the GitHub address to the custom domain. Explain how testers can export work before the address changes.
+
 ## Mobile and iPad release priorities
 
 Resolve these four findings before calling Still ready for general mobile and iPad use.
