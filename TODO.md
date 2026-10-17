@@ -11,8 +11,9 @@ Relevant tests cover known pixels and image edges. Browser and device validation
 
 ## Hosting and custom domain
 
-- [ ] Publish the mobile beta at `https://joppevos.github.io/value-study/` through GitHub Pages.
-  Run unit tests, build the site at its deployment path, and test worker loading, PNG export, manifest paths, and offline reload before publishing.
+- [x] Publish the mobile beta at [joppevos.github.io/value-study](https://joppevos.github.io/value-study/) through GitHub Pages.
+  The workflow runs unit tests, builds at the deployment path, and tests worker loading, PNG export, manifest paths, and offline reload before publishing.
+  On 2026-10-17, all six deployment checks also passed against the live HTTPS site at phone and iPad screen sizes. Physical-device testing remains open.
 - [ ] Choose a custom domain or subdomain for Still before a wider release. Connect it to GitHub Pages and enable HTTPS.
   Use the same hostname if hosting moves later. A different hostname does not automatically inherit locally saved studies or remembered adjustments.
 - [ ] Plan the move from the GitHub address to the custom domain. Explain how testers can export work before the address changes.

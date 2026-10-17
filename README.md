@@ -106,7 +106,7 @@ npm run preview
 
 ## GitHub Pages deployment
 
-The Pages address is `https://joppevos.github.io/value-study/`.
+Open [Still on GitHub Pages](https://joppevos.github.io/value-study/) on a phone, iPad, or computer.
 In the repository settings, select Pages and set the deployment source to GitHub Actions.
 The deployment workflow tests the app, builds `dist`, and publishes successful builds after pushes to `main`.
 It reads the base path from GitHub Pages so that a future custom domain can use the site root.
