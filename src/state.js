@@ -17,6 +17,11 @@ export function sanitizeState(state) {
     if (state.settings[key] !== undefined && !valid.includes(state.settings[key])) return null;
     if (state.settings[key] !== undefined) settings[key] = state.settings[key];
   }
+  // Color study is deferred. Restore its framing and value choices without
+  // silently applying hidden palette, smoothing-method, or color edits.
+  if (settings.mode === 'color') { settings.mode = 'value'; settings.chroma = 0; }
+  settings.palette = 0;
+  settings.smoothing = 'source';
   settings.flip = state.settings.flip === true;
   const boundaries = [];
   for (const level of [2, 3, 4, 5, 7]) {

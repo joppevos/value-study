@@ -2,6 +2,7 @@ import './style.css';
 import { defaultBoundaries } from './process.js';
 import { sampleArea, compareColors } from './color.js';
 import { studyDefaults } from './study.js';
+import { sanitizeState } from './state.js';
 import { setupWorkspace } from './workspace.js';
 
 const defaults = studyDefaults;
@@ -32,8 +33,8 @@ document.querySelector('#app').innerHTML = `
         <div id="busy" hidden>Developing your study…</div>
       </div>
       <section id="companion" class="companion" hidden aria-label="Second image"><h2 id="companion-label">Painting</h2><canvas id="companion-preview" aria-label="Second study"></canvas><p id="companion-status" role="status"></p></section></div>
-      <div class="stage-bottom"><span id="status" role="status" aria-live="polite">A little distance can change how you see.</span><button id="compare" disabled>◑ Hold to see original</button></div>
-      <div class="sample-toolbar"><button id="squint" class="button" disabled aria-pressed="false">Hold to squint</button><button id="sample-toggle" class="button" aria-pressed="false" disabled>⊙ Sample colors</button><span id="sample-help">Compare colors from a small area, not a single pixel.</span></div>
+      <div class="stage-bottom"><span id="status" role="status" aria-live="polite">A little distance can change how you see.</span></div>
+      <div class="sample-toolbar" role="group" aria-label="Observe and compare"><button id="compare" class="button" disabled>Hold to see original</button><button id="squint" class="button" disabled aria-pressed="false">Hold to squint</button><button id="sample-toggle" class="button" aria-pressed="false" disabled>⊙ Sample colors</button><span id="sample-help">Compare colors from a small area, not a single pixel.</span></div>
       <details class="workspace-tools"><summary>Compare, frame & save</summary><div id="workspace-tools"></div></details>
       <section id="sampler" class="sampler" aria-label="Color comparison" hidden>
         <div class="sample-heading"><div><h2>Look closer.</h2><p>Tap the image. Pin A, then choose B.</p></div><label class="sample-source-label" for="sample-source">Sample from<select id="sample-source"><option value="original">Original photo</option><option value="study">Processed study</option></select></label></div>
@@ -43,16 +44,15 @@ document.querySelector('#app').innerHTML = `
       </section>
     </section>
     <aside>
-      <div class="panel-heading"><h2>Your darkroom</h2><button id="reset" disabled>Reset</button></div>
+      <div class="panel-heading"><h2>Study the shapes</h2><button id="reset" disabled>Reset</button></div>
       <div class="history-controls" role="group" aria-label="Adjustment history"><button id="undo" class="button" disabled>Undo</button><button id="redo" class="button" disabled>Redo</button></div>
       <fieldset id="controls" disabled>
-        <div class="segments mode-switch" id="modes" role="group" aria-label="Study view"><button data-mode="value" class="active" aria-pressed="true">◐ Value</button><button data-mode="color" aria-pressed="false">◉ Color</button><button data-mode="chroma" aria-pressed="false">Chroma</button></div>
-        <section class="control-section" id="value-controls"><div class="control-title"><span class="control-name">Value range</span><span>01</span></div><p>Value means how light or dark a color appears.</p><div class="segments" id="levels" role="group" aria-label="Number of value groups">${[[0, 'Full'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [7, '7']].map(([value, label]) => `<button data-level="${value}" class="${value === 0 ? 'active' : ''}" aria-pressed="${value === 0}">${label}</button>`).join('')}</div><figure id="histogram-figure"><figcaption>Adjusted values before grouping</figcaption><svg id="histogram" viewBox="0 0 256 80" role="img" aria-label="Value histogram: dark at left, light at right"></svg></figure><div id="value-strip" class="value-strip" aria-hidden="true"></div><details id="boundary-details" hidden><summary>Adjust value boundaries</summary><p>Move each cutoff to change the size of the value areas. Cutoffs cannot cross.</p><div id="boundaries"></div><button id="even-boundaries" class="text-button">Space boundaries evenly</button></details><details id="group-gray-details" hidden><summary>Display grays & outlines</summary><p>Change group grays without moving their boundaries. Outlines appear only in the preview.</p><div id="group-grays"></div><label class="check-label"><input id="outlines" type="checkbox"/> Show group outlines</label></details><div id="group-areas" hidden><p class="group-help">Tap a group to isolate its shapes.</p><div id="group-buttons" class="group-buttons" role="group" aria-label="Value group areas"></div><button id="show-groups" class="text-button" hidden>Show all groups</button></div></section>
-        <section id="color-help" class="control-section" hidden><div class="control-title"><span class="control-name">Color study</span><span>01</span></div><p>Keep the color. Reduce detail with the median filter below, then sample the larger shapes.</p><p>Value groups stay saved when you switch back.</p><label class="select-label" for="smoothing">Color smoothing<select id="smoothing"><option value="source">Select neighboring colors</option><option value="channels">Separate RGB medians</option></select></label><label class="select-label" for="palette">Color limit<select id="palette" aria-label="Color limit" aria-describedby="palette-help palette-summary"><option value="0">Full color</option><option value="3">Up to 3 colors</option><option value="5">Up to 5 colors</option><option value="8">Up to 8 colors</option><option value="12">Up to 12 colors</option><option value="16">Up to 16 colors</option></select></label><p id="palette-help">Chooses colors from the image after smoothing and adjustments. The limit reduces color count; the median radius removes small details.</p><p id="palette-summary" role="status"></p><div id="palette-swatches" class="palette-swatches" aria-label="Chosen palette and image coverage"></div></section>
+        <div class="segments mode-switch" id="modes" role="group" aria-label="Study view"><button data-mode="value" class="active" aria-pressed="true">◐ Value</button><button data-mode="chroma" aria-pressed="false">Chroma</button></div>
+        <section class="control-section" id="value-controls"><div class="control-title"><span class="control-name">Value groups</span></div><p>Value means how light or dark a color appears.</p><div class="segments" id="levels" role="group" aria-label="Number of value groups">${[[0, 'Full'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [7, '7']].map(([value, label]) => `<button data-level="${value}" class="${value === 0 ? 'active' : ''}" aria-pressed="${value === 0}">${label}</button>`).join('')}</div><details id="distribution-details"><summary>Value distribution</summary><figure id="histogram-figure"><figcaption>Adjusted values before grouping</figcaption><svg id="histogram" viewBox="0 0 256 80" role="img" aria-label="Value histogram: dark at left, light at right"></svg></figure></details><div id="value-strip" class="value-strip" aria-hidden="true"></div><details id="boundary-details" hidden><summary>Adjust value boundaries</summary><p>Move each cutoff to change the size of the value areas. Cutoffs cannot cross.</p><div id="boundaries"></div><button id="even-boundaries" class="text-button">Space boundaries evenly</button></details><details id="group-gray-details" hidden><summary>Display grays & outlines</summary><p>Change group grays without moving their boundaries. Outlines appear only in the preview.</p><div id="group-grays"></div><label class="check-label"><input id="outlines" type="checkbox"/> Show group outlines</label></details><div id="group-areas" hidden><p class="group-help">Tap a group to isolate its shapes.</p><div id="group-buttons" class="group-buttons" role="group" aria-label="Value group areas"></div><button id="show-groups" class="text-button" hidden>Show all groups</button></div></section>
         <section id="chroma-help" class="control-section" hidden><div class="control-title"><span class="control-name">Color intensity</span></div><p>Chroma means muted or intense color. Black shows neutral areas. White shows OKLCH chroma of 0.4 or higher. This is not a value view.</p></section>
         <section id="chroma-adjustment" class="control-section" hidden>${slider('chroma', 'Chroma adjustment', -100, 100, 0)}<p>Adjusts OKLCH chroma while keeping model lightness before rounding. Display limits can reduce the requested intensity.</p><p id="gamut-note" role="status"></p></section>
-        <section class="control-section"><div class="control-title"><span class="control-name">Light & shadow</span><span>02</span></div>${slider('brightness', 'Brightness', -100, 100, 0)}${slider('contrast', 'Contrast', -100, 100, 0)}</section>
-        <section class="control-section"><div class="control-title"><span class="control-name">Simplify the details</span><span>03</span></div><p>A median filter removes small details. In Color view, choose neighboring colors or separate RGB medians.</p>${slider('median', 'Median radius', 0, 12, 0)}<div class="range-labels"><span>Original detail</span><span>Broad shapes</span></div></section>
+        <details class="control-section" id="light-adjustments"><summary>Adjust light & shadow</summary>${slider('brightness', 'Brightness', -100, 100, 0)}${slider('contrast', 'Contrast', -100, 100, 0)}</details>
+        <section class="control-section"><div class="control-title"><span class="control-name">Simplify the details</span></div><p>Remove small details to see the larger shapes.</p>${slider('median', 'Detail smoothing', 0, 12, 0)}<div class="range-labels"><span>Original detail</span><span>Broad shapes</span></div></section>
         <details class="control-section"><summary>Framing</summary><p>Crop edges use percentages of the original photo. Rotation follows crop. Undo restores the earlier framing.</p><div class="framing-buttons"><button id="flip" class="button" aria-pressed="false">Flip horizontally</button><button id="rotate" class="button">Rotate 90°</button></div>${slider('cropLeft', 'Left edge (%)', 0, 99, 0)}${slider('cropRight', 'Right edge (%)', 1, 100, 100)}${slider('cropTop', 'Top edge (%)', 0, 99, 0)}${slider('cropBottom', 'Bottom edge (%)', 1, 100, 100)}</details>
       </fieldset>
       <div class="export"><button id="save" class="button primary" disabled>↓ Save study</button><span id="export-help">PNG image · up to 1600 px</span></div>
@@ -94,7 +94,9 @@ function finishGesture() {
   record(before);
 }
 function restore(state) {
-  settings = { ...structuredClone(defaults), ...structuredClone(state.settings) };
+  state = sanitizeState(state);
+  if (!state) return;
+  settings = state.settings;
   boundariesByLevel.clear();
   for (const [level, cutoffs] of state.boundaries) boundariesByLevel.set(level, [...cutoffs]);
   highlightedGroup = null; counts = [];
@@ -153,13 +155,8 @@ function receiveStudy({ data }) {
   counts = data.counts;
   $('dimensions').textContent = `${data.width} × ${data.height}`;
   $('busy').hidden = true; $('save').disabled = false;
-  $('status').textContent = settings.mode === 'chroma' ? 'Chroma · Muted to intense.' : settings.mode === 'color' ? 'Color · Study the larger shapes.' : settings.levels ? `${settings.levels} values · Tap a group to isolate it.` : 'Grayscale · Every shade has a place.';
+  $('status').textContent = settings.mode === 'chroma' ? 'Chroma · Muted to intense.' : settings.levels ? `${settings.levels} values · Tap a group to isolate it.` : 'Grayscale · Every shade has a place.';
   $('gamut-note').textContent = data.gamutCount ? `${(data.gamutCount / (data.width * data.height) * 100).toFixed(1)}% of pixels reached the display limit. Their chroma was reduced at the same model lightness.` : 'The requested colors fit the display range.';
-  $('palette-summary').textContent = data.palette.length ? `${data.palette.length} chosen colors · Percentages show image area` : 'Full color · No palette reduction';
-  $('palette-swatches').innerHTML = data.palette.map(color => {
-    const coverage = (color.count / (data.width * data.height) * 100).toFixed(1);
-    return `<figure class="palette-color"><span style="background:${color.hex}" title="${color.hex}: ${coverage}% of image" role="img" aria-label="${color.hex}, ${coverage} percent"></span><figcaption>${coverage}%</figcaption></figure>`;
-  }).join('');
   drawHistogram(); updateGroups();
   if (sampling && samplePoint) takeSample();
   draw();
@@ -237,10 +234,8 @@ function updateControls() {
     button.classList.toggle('active', active); button.setAttribute('aria-pressed', active);
   });
   $('value-controls').hidden = settings.mode !== 'value';
-  $('color-help').hidden = settings.mode !== 'color';
   $('chroma-help').hidden = settings.mode !== 'chroma';
   $('chroma-adjustment').hidden = settings.mode === 'value';
-  $('smoothing').value = settings.smoothing; $('palette').value = settings.palette;
   $('flip').setAttribute('aria-pressed', String(settings.flip));
   $('group-gray-details').hidden = settings.levels < 2;
   document.querySelectorAll('[data-level]').forEach(button => {
@@ -283,12 +278,6 @@ $('reset').onclick = () => {
   updateControls(); render();
 };
 
-for (const key of ['smoothing', 'palette']) {
-  $(key).onchange = event => {
-    finishGesture(); const before = snapshot(); settings[key] = key === 'palette' ? Number(event.target.value) : event.target.value;
-    record(before); render();
-  };
-}
 $('group-grays').oninput = event => {
   const i = Number(event.target.id.replace('gray-', ''));
   if (!Number.isInteger(i)) return;

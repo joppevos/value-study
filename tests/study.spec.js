@@ -31,8 +31,8 @@ test('opens an image, switches views, and keeps adjustments', async ({ page }) =
   expect(await pixel(page)).toEqual([54, 54, 54, 255]);
   await page.locator('[data-level="3"]').click(); await ready(page);
   await range(page, 'brightness', 5);
-  await page.locator('[data-mode="color"]').click(); await ready(page);
-  expect(await pixel(page)).toEqual([255, 13, 13, 255]);
+  await page.locator('[data-mode="chroma"]').click(); await ready(page);
+  expect((await pixel(page))[0]).toBeGreaterThan(100);
   await expect(page.locator('#value-controls')).toBeHidden();
   await page.locator('[data-mode="value"]').click(); await ready(page);
   await expect(page.locator('[data-level="3"]')).toHaveAttribute('aria-pressed', 'true');
@@ -104,17 +104,16 @@ test('supports keyboard sampling and clears samples on a new image', async ({ pa
   await expect(page.locator('#wheel-a')).toBeHidden();
 });
 
-test('filters color, compares with original, and resets all adjustments', async ({ page }) => {
+test('smooths values, compares with original, and resets all adjustments', async ({ page }) => {
   await load(page);
-  await page.locator('[data-mode="color"]').click(); await ready(page);
   await range(page, 'median', 2);
   await range(page, 'brightness', -20);
-  expect(await pixel(page)).toEqual([204, 0, 0, 255]);
+  expect(await pixel(page)).toEqual([3, 3, 3, 255]);
   await page.locator('#compare').focus();
   await page.keyboard.down('Enter');
   expect(await pixel(page)).toEqual([255, 0, 0, 255]);
   await page.keyboard.up('Enter');
-  expect(await pixel(page)).toEqual([204, 0, 0, 255]);
+  expect(await pixel(page)).toEqual([3, 3, 3, 255]);
   await page.locator('#reset').click(); await ready(page);
   await expect(page.locator('#median')).toHaveValue('0');
   await expect(page.locator('[data-mode="value"]')).toHaveAttribute('aria-pressed', 'true');
@@ -199,7 +198,7 @@ test('undo groups slider input, restores reset and boundaries, and clears redo a
   await expect(page.locator('#brightness')).toHaveValue('20');
   await page.locator('#undo').click(); await ready(page);
   await expect(page.locator('#boundary-0')).toHaveValue('43');
-  await page.locator('[data-mode="color"]').click(); await ready(page);
+  await page.locator('[data-mode="chroma"]').click(); await ready(page);
   await expect(page.locator('#redo')).toBeDisabled();
   await page.locator('#undo').click(); await ready(page);
   await expect(page.locator('[data-mode="value"]')).toHaveAttribute('aria-pressed', 'true');
@@ -231,15 +230,18 @@ async function companionReady(page) {
   await expect(page.locator('#companion-status')).toContainText('study');
 }
 
-test('color simplification, chroma view and gamut feedback stay separate from value grouping', async ({ page }) => {
+test('chroma stays distinct from value grouping', async ({ page }) => {
   await load(page);
-  await page.locator('[data-mode="color"]').click(); await ready(page);
-  await page.locator('#palette').selectOption('3'); await ready(page);
-  await expect(page.locator('#palette-swatches span')).toHaveCount(3);
-  await page.locator('#smoothing').selectOption('channels'); await ready(page);
+  await expect(page.locator('[data-mode="color"]')).toHaveCount(0);
+  await expect(page.locator('#palette')).toHaveCount(0);
+  await expect(page.locator('#light-adjustments')).not.toHaveAttribute('open');
+  await expect(page.locator('#distribution-details')).not.toHaveAttribute('open');
+  const actions = await page.locator('.sample-toolbar button').evaluateAll(buttons => buttons.map(button => ({ width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height })));
+  expect(actions).toHaveLength(3);
+  for (const action of actions) { expect(action.width).toBeGreaterThanOrEqual(44); expect(action.height).toBeGreaterThanOrEqual(44); }
+  await page.locator('[data-mode="chroma"]').click(); await ready(page);
   await range(page, 'chroma', 100);
   await expect(page.locator('#gamut-note')).toContainText('display limit');
-  await page.locator('[data-mode="chroma"]').click(); await ready(page);
   await expect(page.locator('#chroma-help')).toBeVisible();
   const chromaPixel = await pixel(page); expect(chromaPixel[0]).toBeGreaterThan(100);
   expect(chromaPixel[0]).toBe(chromaPixel[1]);
@@ -346,18 +348,21 @@ test('full-resolution export uses the native file and omits preview isolation', 
   expect(bytes.readUInt32BE(16)).toBe(1800); expect(bytes.readUInt32BE(20)).toBe(100);
 });
 
-test('color limit keeps a dominant muted green and explains the chosen palette', async ({ page }) => {
-  await load(page, { name: 'muted-green.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="104" height="40"><path fill="#606760" d="M0 0h100v40H0z"/><path fill="#636160" d="M0 0h1v40H0z"/><path fill="#203020" d="M100 0h1v40h-1z"/><path fill="#405040" d="M101 0h1v40h-1z"/><path fill="#809080" d="M102 0h1v40h-1z"/><path fill="#c0d0c0" d="M103 0h1v40h-1z"/></svg>') });
-  await page.locator('[data-mode="color"]').click(); await ready(page);
-  await page.getByLabel('Color limit', { exact: true }).selectOption('5'); await ready(page);
-  expect(await pixel(page)).toEqual([96, 103, 96, 255]);
-  await expect(page.locator('#palette-summary')).toContainText('5 chosen colors');
-  await expect(page.locator('#palette-help')).toContainText('after smoothing and adjustments');
-  await expect(page.locator('#palette-swatches .palette-color').first()).toContainText('96.2%');
-  await expect(page.locator('#palette-swatches span').first()).toHaveAttribute('aria-label', '#606760, 96.2 percent');
-  await page.locator('#palette').selectOption('0'); await ready(page);
-  await expect(page.locator('#palette-summary')).toContainText('No palette reduction');
-  await expect(page.locator('#palette-swatches span')).toHaveCount(0);
+test('restores a legacy Color study as values without hidden color edits', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('still-adjustments', JSON.stringify({
+    settings: { mode: 'color', palette: 5, smoothing: 'channels', chroma: 80, levels: 3, brightness: 5, flip: true },
+  })));
+  await page.reload();
+  await page.locator('#file').setInputFiles(fixture); await ready(page);
+  await expect(page.locator('[data-mode="value"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-level="3"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#brightness')).toHaveValue('5');
+  await expect(page.locator('#flip')).toHaveAttribute('aria-pressed', 'true');
+  expect(await pixel(page)).toEqual([0, 0, 0, 255]);
+  await page.locator('#sample-toggle').click();
+  await sample(page, 1 / 6);
+  expect(await pixel(page)).toEqual([0, 0, 255, 255]);
 });
 
 test('keeps the preview in place when sidebar content changes', async ({ page }) => {
@@ -373,8 +378,6 @@ test('keeps the preview in place when sidebar content changes', async ({ page })
     const current = await bounds();
     for (const key of ['x', 'y', 'width', 'height']) expect(Math.abs(current[key] - original[key])).toBeLessThan(1);
   }
-  await page.locator('[data-mode="color"]').click(); await ready(page); await expectStable();
-  await page.locator('#palette').selectOption('5'); await ready(page); await expectStable();
   await page.locator('[data-mode="chroma"]').click(); await ready(page); await expectStable();
   await page.locator('[data-mode="value"]').click(); await ready(page);
   await page.locator('[data-level="7"]').click(); await ready(page); await expectStable();
@@ -410,7 +413,7 @@ test('puts the photograph first on compact screens while keeping image replaceme
     await page.locator('#change-image').click();
     await (await choosing).setFiles(fixture); await ready(page);
     await expect(page.locator('#image-label')).toHaveText(fixture.name);
-    await page.locator('[data-mode="color"]').click(); await ready(page);
+    await page.locator('[data-mode="chroma"]').click(); await ready(page);
     await expect(page.locator('#change-image')).toBeVisible();
   } else {
     await expect(page.locator('header')).toBeVisible();

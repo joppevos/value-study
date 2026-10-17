@@ -140,3 +140,23 @@ select,input[type=text]{font:inherit;max-width:100%;padding:10px;border:1px soli
   body.has-image .workspace-tools{padding:4px 12px}
 }
 @media(max-width:650px){body.has-image #dimensions{display:none}}
+
+/* Keep the common observation actions together and comfortable to touch. */
+.sample-toolbar { display:flex; flex-wrap:wrap; gap:8px; }
+.sample-toolbar .button { min-height:44px; flex:1 1 auto; }
+.sample-toolbar > span { flex-basis:100%; }
+.control-section > summary { min-height:44px; align-content:center; cursor:pointer; }
+.group-buttons button, .text-button, .history-controls button, #reset { min-height:44px; }
+.range-control input[type="range"] { min-height:44px; cursor:pointer; background:linear-gradient(#dce0d2,#dce0d2) center / 100% 4px no-repeat; }
+@media (max-width:1100px) {
+  body.has-image .stage-bottom { min-height:32px; }
+  body.has-image .sample-toolbar .button { padding:8px 10px; font-size:12px; letter-spacing:0; }
+}
+
+@media (min-width:651px) and (max-width:1100px) {
+  .range-control label, .control-section p, .control-name { font-size:12px; }
+}
+
+/* Closed secondary tools should occupy a single touch-sized row. */
+details.control-section { padding:8px 0; }
+#compare.button { border:1px solid #d2d5c9; border-radius:6px; background:transparent; font:inherit; font-size:11px; }

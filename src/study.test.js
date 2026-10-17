@@ -136,3 +136,19 @@ test('five-color reduction retains a dominant green family across different ligh
   }
   assert.ok(greenArea >= 650, `Expected the main green area to remain green, got ${greenArea} of 1000 pixels`);
 });
+
+test('legacy Color studies restore as values with hidden color controls disabled', () => {
+  const legacy = { settings: { mode: 'color', levels: 3, palette: 5, smoothing: 'channels', chroma: 80, brightness: 5, flip: true, cropLeft: 10 }, boundaries: [[3, [50, 180]]] };
+  const restored = sanitizeState(legacy);
+  assert.equal(restored.settings.mode, 'value');
+  assert.equal(restored.settings.palette, 0);
+  assert.equal(restored.settings.smoothing, 'source');
+  assert.equal(restored.settings.chroma, 0);
+  assert.equal(restored.settings.levels, 3);
+  assert.equal(restored.settings.brightness, 5);
+  assert.equal(restored.settings.flip, true);
+  assert.equal(restored.settings.cropLeft, 10);
+  assert.deepEqual(restored.boundaries.find(([level]) => level === 3)[1], [50, 180]);
+  assert.equal(legacy.settings.mode, 'color');
+  assert.equal(legacy.settings.palette, 5);
+});

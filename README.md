@@ -22,19 +22,14 @@ Still retains the original file in memory for full-resolution export. It does no
 
 Value view offers a full grayscale range or 2, 3, 4, 5, or 7 groups. Adjust value boundaries changes each cutoff.
 Cutoffs cannot cross. Each group count remembers its own boundaries during the session.
-The histogram shows the area at each adjusted grayscale value before grouping. Vertical lines mark the boundaries.
+Open Value distribution to see the histogram. It shows the area at each adjusted grayscale value before grouping. Vertical lines mark the boundaries.
 
 Select a value group to isolate its shapes. Coverage percentages describe the photograph, including transparent areas composited onto white.
 Display grays & outlines changes the appearance of each group without changing its coverage. Outlines appear only in the preview.
 
-Color view keeps color and offers two smoothing methods. Select neighboring colors chooses an actual neighboring color at the middle grayscale rank.
-Separate RGB medians filters each color channel independently and can create new colors. Neither method guarantees preservation of perceived value.
-
-Color limit selects up to the chosen number of colors from the image after smoothing, brightness, contrast, and chroma adjustments.
-It is separate from the median radius, which removes small details. It does not use a fixed or preset palette.
-The selection groups nearby colors in OKLab, a perceptual color model, and refines them using their image coverage.
-Each representative is an existing color in that adjusted image. The result balances lightness and color differences rather than reserving slots for named hues.
-Swatches show the chosen colors and their coverage percentages. Some images need fewer colors than the selected maximum.
+The Color tab and palette controls are deferred while we focus on observation and value decisions.
+Color sampling from the original photo remains available. Older saved Color studies reopen in Value view without hidden palette or color edits; framing and value settings remain.
+Use Detail smoothing to remove small distracting shapes. Open Adjust light & shadow for brightness and contrast.
 
 Chroma view maps OKLCH color intensity from black to white on a fixed scale of 0 to 0.4.
 Neutral areas appear black. High intensity areas appear bright. Brightness in this view does not represent the photograph's value.
@@ -63,7 +58,7 @@ Grids and backgrounds do not change samples or exports. Show controls or Escape 
 
 Open Reference & painting, then Open painting to choose a second photograph. Both images share the selected study view.
 Adjustments and export apply to the image on the left. Switch images moves the other image into that editing position.
-Unlinked study adjustments remain independent. Linked adjustments share brightness, contrast, smoothing, palette, chroma, value groups, and boundaries.
+Unlinked study adjustments remain independent. Linked adjustments share brightness, contrast, detail smoothing, chroma, value groups, and boundaries.
 Framing stays independent. Matching adjustments does not correct lighting or exposure differences between photographs.
 
 Alignment controls move and scale the second preview to compare corresponding areas. Alignment changes only that preview.

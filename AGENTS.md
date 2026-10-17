@@ -28,25 +28,15 @@ Do not add paint tube databases, paint inventory, brand catalogs, or mixing reci
 
 Camera exposure, lighting, and screens affect the image that artists see. Describe measurements as properties of the photograph, not exact measurements of physical paint. Do not promise that color adjustments preserve perceived value unless the implementation supports that claim.
 
-## Feature direction
+## Current product focus
 
-The next improvements are:
+Keep the main workflow small: value groups, temporary original comparison, squint, and comparing sampled colors. Keep the photograph central. Put secondary adjustments behind disclosures and use touch targets of at least 44 pixels for the main actions.
 
-- Color-preserving median filtering. A median filter removes small details through nearby middle values.
-- Adjustable boundaries between value groups, rather than only a fixed number of groups.
-- Tap-to-compare color samples, with small-area sampling to reduce noise.
+The Color tab and its palette and smoothing-method controls are deliberately deferred. Palette reduction has produced confusing brown or gray results in green images and skin tones. It needs artist trials to establish whether it preserves useful color relationships. More editing controls also distract from observing large shapes. Do not restore this tab simply because the processing code exists.
 
-Later improvements include:
+Keep the color-processing implementation and pixel tests for future work. Existing saved Color studies reopen in Value view with palette reduction and hidden color edits disabled; retain their framing and value settings. Color sampling from the original photograph stays available because it helps compare relationships without changing the image. Chroma remains a separate view of muted and intense areas, not a replacement Color tab.
 
-- Color simplification that reduces the palette and small distracting shapes.
-- A chroma view that distinguishes muted and intense areas.
-- A color wheel connected to sampled colors.
-- Highlighting individual value groups and showing their image coverage.
-- A temporary squint view that softens detail or reduces preview size.
-- Side-by-side comparison of a reference and a painting.
-- Crop, rotation, undo, saved variations, and a distraction-free view.
-
-These features describe product direction, not completed functionality. Choose small, testable additions instead of exposing all tools at once. Keep reducing palette size separate from removing small shapes.
+Before returning to Color study, test real references with artists and explain separately what palette reduction and detail smoothing change. Performance work and physical-device validation remain tracked in TODO.md.
 
 ## Engineering guidance
 

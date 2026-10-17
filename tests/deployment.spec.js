@@ -19,12 +19,12 @@ test('loads the processing worker and exports a study from the published path', 
   await page.goto('./');
   await openPhoto(page);
   await expect(page.locator('#status')).toContainText('Grayscale');
-  await page.locator('[data-mode="color"]').tap();
+  await page.locator('[data-level="3"]').tap();
   await expect(page.locator('#save')).toBeEnabled();
-  expect(await page.locator('#preview').evaluate(canvas => [...canvas.getContext('2d').getImageData(10, 10, 1, 1).data])).toEqual([255, 0, 0, 255]);
+  expect(await page.locator('#preview').evaluate(canvas => [...canvas.getContext('2d').getImageData(10, 10, 1, 1).data])).toEqual([0, 0, 0, 255]);
   const download = page.waitForEvent('download');
   await page.locator('#save').tap();
-  expect((await download).suggestedFilename()).toBe('still-color-study.png');
+  expect((await download).suggestedFilename()).toBe('still-value-study.png');
 });
 
 test('serves the manifest, icons and service worker under the same site path', async ({ page, request, baseURL }) => {
@@ -49,9 +49,9 @@ test('reloads offline and processes another image using the cached worker', asyn
   try {
     await page.reload();
     await openPhoto(page);
-    await page.locator('[data-mode="color"]').tap();
+    await page.locator('[data-level="3"]').tap();
     await expect(page.locator('#save')).toBeEnabled();
-    await page.locator('#palette').selectOption('5');
-    await expect(page.locator('#palette-summary')).toContainText('1 chosen colors');
+    await expect(page.locator('#status')).toContainText('3 values');
+    await expect(page.locator('#group-buttons button')).toHaveCount(3);
   } finally { await context.setOffline(false); }
 });
