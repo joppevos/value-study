@@ -74,6 +74,7 @@ Matching adjustment values does not correct differences in exposure or lighting 
 ## Priority 3: Support composition and value decisions
 
 - [x] Keep the image position and size stable when study views or sidebar content change. Cover this with Chromium and mobile/iPad WebKit regression tests.
+- [x] Use a compact study layout on phone and tablet widths once a photo opens. Hide branding and introductory text, retain Open image, and reduce preview padding.
 
 - [x] Keep sampling, original comparison, and export consistent with horizontal flip and other framing changes.
 - [x] Add a view that hides controls, with a visible exit and Escape support.
@@ -119,7 +120,7 @@ The export memory limit above remains a release priority.
 
 ## Outstanding validation and measurement
 
-On 2026-10-17, all 28 unit tests, all 38 Chromium browser cases, and the production build passed.
+On 2026-10-17, all 28 unit tests, all 40 Chromium browser cases, and the production build passed.
 Browser coverage uses desktop and phone screen sizes and includes the muted-green palette regression and native SVG export.
 The mobile review ran 54 WebKit scenarios across phone, iPad portrait, and iPad landscape layouts. Of those, 51 passed.
 The three failures involved photo storage in temporary WebKit contexts. Persistent-context photo saving, reload, and reopening passed separately.

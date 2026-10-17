@@ -45,6 +45,9 @@ This does not promise identical perceived value, physical paint behavior, or pre
 
 ## Frame and compare decisions
 
+On phone and tablet widths, opening a photo hides the branding and introduction and reduces space around the preview.
+Use Open image beside the filename to choose another photo. The initial welcome screen remains available before opening a photo.
+
 Framing offers crop edges as percentages, quarter-turn rotation, and horizontal flip. Crop applies before rotation and flip.
 Original comparison and sampling use that same framing. Undo and Reset can restore the earlier framing.
 Hold to squint temporarily shrinks the preview. Hold to see original temporarily shows the framed original photo.

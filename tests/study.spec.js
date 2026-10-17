@@ -382,3 +382,39 @@ test('keeps the preview in place when sidebar content changes', async ({ page })
   await page.locator('#group-gray-details summary').click(); await expectStable();
   await page.locator('#sample-toggle').click(); await expectStable();
 });
+
+test('puts the photograph first on compact screens while keeping image replacement available', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('header')).toBeVisible();
+  await expect(page.locator('.empty')).toBeVisible();
+  await expect(page.locator('#change-image')).toBeHidden();
+  await page.locator('#file').setInputFiles({ name: 'compact.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#678253"/></svg>') });
+  await ready(page);
+  const compact = page.viewportSize().width <= 1100;
+  if (compact) {
+    await expect(page.locator('header')).toBeHidden();
+    await expect(page.locator('.intro')).toBeHidden();
+    await expect(page.locator('footer')).toBeHidden();
+    await expect(page.locator('#change-image')).toBeVisible();
+    const layout = await page.evaluate(() => {
+      const image = document.querySelector('#preview').getBoundingClientRect();
+      const viewport = document.querySelector('#dropzone').getBoundingClientRect();
+      const open = document.querySelector('#change-image').getBoundingClientRect();
+      return { imageTop: image.top + scrollY, imageWidth: image.width, imageHeight: image.height, viewportHeight: viewport.height, openHeight: open.height, pageWidth: document.documentElement.scrollWidth, screenWidth: innerWidth };
+    });
+    expect(layout.imageTop).toBeLessThan(70);
+    expect(layout.viewportHeight - layout.imageHeight).toBeLessThanOrEqual(18);
+    expect(layout.openHeight).toBeGreaterThanOrEqual(44);
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.screenWidth);
+    const choosing = page.waitForEvent('filechooser');
+    await page.locator('#change-image').click();
+    await (await choosing).setFiles(fixture); await ready(page);
+    await expect(page.locator('#image-label')).toHaveText(fixture.name);
+    await page.locator('[data-mode="color"]').click(); await ready(page);
+    await expect(page.locator('#change-image')).toBeVisible();
+  } else {
+    await expect(page.locator('header')).toBeVisible();
+    await expect(page.locator('.intro')).toBeVisible();
+    await expect(page.locator('#change-image')).toBeHidden();
+  }
+});

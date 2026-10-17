@@ -25,7 +25,7 @@ document.querySelector('#app').innerHTML = `
   <div class="intro"><div><div class="eyebrow">LESS DETAIL. MORE CLARITY.</div><h1>See the bigger picture.</h1><p>Find the light, the dark, and the colors between.</p></div><button class="button upload secondary" aria-label="Open image">${icon} Open image</button></div>
   <div class="workspace">
     <section class="stage" aria-label="Image preview">
-      <div class="stage-top"><span id="image-label">YOUR NEXT STUDY</span><span id="dimensions">A fresh perspective</span></div>
+      <div class="stage-top"><span id="image-label">YOUR NEXT STUDY</span><span id="dimensions">A fresh perspective</span><button id="change-image" class="button upload secondary" aria-label="Open another image">${icon} Open image</button></div>
       <div class="comparison-pair"><div class="viewport" id="dropzone">
         <div class="empty"><div class="empty-art" aria-hidden="true"><span></span><span></span><span></span></div><h2>Start with something you see.</h2><p>Your painting, a reference, a little inspiration.<br>Take a photo or drop an image here.</p><div class="empty-actions"><button class="button primary upload">${icon} Choose image</button><button class="button camera">Take a photo</button></div><small>JPG, PNG, WebP & other browser-supported images</small></div>
         <div class="canvas-wrap" hidden><canvas id="preview" tabindex="0" aria-label="Study preview. Enable Sample colors to inspect colors with a tap or keyboard." aria-describedby="sample-help"></canvas><span id="sample-marker" hidden aria-hidden="true"></span><svg id="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg></div>
@@ -206,6 +206,7 @@ async function load(file) {
     squint(false);
     gestureStart = null; undoStack.length = 0; redoStack.length = 0; updateHistory();
     clearSamples();
+    document.body.classList.add('has-image');
     document.querySelector('.empty').hidden = true;
     document.querySelector('.canvas-wrap').hidden = false;
     for (const id of ['controls', 'reset', 'compare', 'sample-toggle', 'squint']) $(id).disabled = false;

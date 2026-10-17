@@ -117,3 +117,26 @@ select,input[type=text]{font:inherit;max-width:100%;padding:10px;border:1px soli
 #exit-focus{position:fixed;right:16px;bottom:16px;background:#fbfbf7;box-shadow:0 2px 10px #0003;z-index:5;min-height:44px}
 .focus-view canvas{max-height:78vh}
 @media(max-width:650px){.workspace-tools{padding:12px 15px}.comparison-pair.has-companion .viewport{padding:8px;min-height:240px}.companion{padding:8px}.comparison-pair.has-companion canvas{max-height:45vh}.companion h2{font-size:10px}.tool-row>.button{flex:1}select{font-size:16px}}
+
+
+/* Once a study is open, compact screens give the photograph the first space. */
+#change-image{display:none}
+@media(max-width:1100px){
+  body.has-image header,body.has-image .intro,body.has-image footer{display:none}
+  body.has-image main{max-width:none;padding:0}
+  body.has-image .workspace{border-top:0;border-left:0;border-right:0;border-radius:0;box-shadow:none}
+  body.has-image .stage-top{padding:4px 12px;gap:8px;min-height:52px}
+  body.has-image #image-label{flex:1;min-width:0;max-width:none}
+  body.has-image #change-image{display:inline-flex;min-height:44px;padding:9px 12px;flex-shrink:0;letter-spacing:0}
+  body.has-image .viewport,body.has-image .comparison-pair.has-companion .viewport{min-height:0;padding:8px}
+  body.has-image .canvas-wrap canvas,body.has-image .companion canvas{max-height:calc(100vh - 180px);max-height:max(160px,calc(100svh - 180px))}
+  body.has-image .companion{padding:8px}
+  body.has-image .stage-bottom{min-height:44px;padding:4px 12px;gap:8px;flex-direction:row;align-items:center}
+  body.has-image #status{flex:1;line-height:1.5}
+  body.has-image #compare{min-height:44px}
+  body.has-image .sample-toolbar{padding:8px 12px;gap:8px;flex-direction:row;align-items:center}
+  body.has-image .sample-toolbar .button{min-height:44px}
+  body.has-image .sample-toolbar>span{display:none}
+  body.has-image .workspace-tools{padding:4px 12px}
+}
+@media(max-width:650px){body.has-image #dimensions{display:none}}
