@@ -32,11 +32,13 @@ Camera exposure, lighting, and screens affect the image that artists see. Descri
 
 Keep the main workflow small: value groups, temporary original comparison, squint, and comparing sampled colors. Keep the photograph central. Put secondary adjustments behind disclosures and use touch targets of at least 44 pixels for the main actions.
 
-The Color tab and its palette and smoothing-method controls are deliberately deferred. Palette reduction has produced confusing brown or gray results in green images and skin tones. It needs artist trials to establish whether it preserves useful color relationships. More editing controls also distract from observing large shapes. Do not restore this tab simply because the processing code exists.
+The simple Color view keeps the photograph in color while detail smoothing removes small distracting shapes. This helps artists compare larger color areas with the original. Keep it separate from Value groups and Chroma. Use source-color smoothing, which selects a neighboring color at the middle grayscale rank. It does not guarantee preservation of every color or perceived value.
 
-Keep the color-processing implementation and pixel tests for future work. Existing saved Color studies reopen in Value view with palette reduction and hidden color edits disabled; retain their framing and value settings. Color sampling from the original photograph stays available because it helps compare relationships without changing the image. Chroma remains a separate view of muted and intense areas, not a replacement Color tab.
+Palette reduction and the smoothing-method selector remain deferred. Palette reduction produced confusing brown or gray results in green images and skin tones. It needs artist trials before returning to the interface. Do not restore these controls simply because their processing code exists.
 
-Before returning to Color study, test real references with artists and explain separately what palette reduction and detail smoothing change. Performance work and physical-device validation remain tracked in TODO.md.
+Keep palette-processing code and pixel tests for future work. Saved Color studies reopen in the simple Color view without hidden palette or chroma edits. Preserve framing, detail smoothing, and value settings. Show chroma adjustment only in Chroma view and clear it when entering Color view. Undo restores the earlier adjustment.
+
+Before adding more color controls, test real references with artists and explain separately what palette reduction and detail smoothing change. Performance work and physical-device validation remain tracked in TODO.md.
 
 ## Engineering guidance
 

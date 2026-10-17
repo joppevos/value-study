@@ -232,7 +232,7 @@ async function companionReady(page) {
 
 test('chroma stays distinct from value grouping', async ({ page }) => {
   await load(page);
-  await expect(page.locator('[data-mode="color"]')).toHaveCount(0);
+  await expect(page.locator('[data-mode="color"]')).toHaveCount(1);
   await expect(page.locator('#palette')).toHaveCount(0);
   await expect(page.locator('#light-adjustments')).not.toHaveAttribute('open');
   await expect(page.locator('#distribution-details')).not.toHaveAttribute('open');
@@ -348,18 +348,18 @@ test('full-resolution export uses the native file and omits preview isolation', 
   expect(bytes.readUInt32BE(16)).toBe(1800); expect(bytes.readUInt32BE(20)).toBe(100);
 });
 
-test('restores a legacy Color study as values without hidden color edits', async ({ page }) => {
+test('restores a legacy Color study without hidden palette or intensity edits', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.setItem('still-adjustments', JSON.stringify({
     settings: { mode: 'color', palette: 5, smoothing: 'channels', chroma: 80, levels: 3, brightness: 5, flip: true },
   })));
   await page.reload();
   await page.locator('#file').setInputFiles(fixture); await ready(page);
-  await expect(page.locator('[data-mode="value"]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-level="3"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-mode="color"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#value-controls')).toBeHidden();
   await expect(page.locator('#brightness')).toHaveValue('5');
   await expect(page.locator('#flip')).toHaveAttribute('aria-pressed', 'true');
-  expect(await pixel(page)).toEqual([0, 0, 0, 255]);
+  expect(await pixel(page)).toEqual([13, 13, 255, 255]);
   await page.locator('#sample-toggle').click();
   await sample(page, 1 / 6);
   expect(await pixel(page)).toEqual([0, 0, 255, 255]);
@@ -378,6 +378,7 @@ test('keeps the preview in place when sidebar content changes', async ({ page })
     const current = await bounds();
     for (const key of ['x', 'y', 'width', 'height']) expect(Math.abs(current[key] - original[key])).toBeLessThan(1);
   }
+  await page.locator('[data-mode="color"]').click(); await ready(page); await expectStable();
   await page.locator('[data-mode="chroma"]').click(); await ready(page); await expectStable();
   await page.locator('[data-mode="value"]').click(); await ready(page);
   await page.locator('[data-level="7"]').click(); await ready(page); await expectStable();
@@ -420,4 +421,34 @@ test('puts the photograph first on compact screens while keeping image replaceme
     await expect(page.locator('.intro')).toBeVisible();
     await expect(page.locator('#change-image')).toBeHidden();
   }
+});
+
+test('smooths color shapes without palette reduction and keeps value groups', async ({ page }) => {
+  await load(page, { name: 'color-noise.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="5" height="5"><rect width="5" height="5" fill="#608040"/><rect x="2" y="2" width="1" height="1" fill="red"/></svg>') });
+  await page.locator('[data-level="3"]').click(); await ready(page);
+  await page.locator('[data-mode="color"]').click(); await ready(page);
+  expect(await pixel(page, 2, 2)).toEqual([255, 0, 0, 255]);
+  await expect(page.locator('#chroma-adjustment')).toBeHidden();
+  await expect(page.locator('#palette')).toHaveCount(0);
+  await range(page, 'median', 1);
+  expect(await pixel(page, 2, 2)).toEqual([96, 128, 64, 255]);
+  await page.locator('#compare').focus(); await page.keyboard.down('Enter');
+  expect(await pixel(page, 2, 2)).toEqual([255, 0, 0, 255]);
+  await page.keyboard.up('Enter');
+  expect(await pixel(page, 2, 2)).toEqual([96, 128, 64, 255]);
+  await page.locator('[data-mode="value"]').click(); await ready(page);
+  await expect(page.locator('[data-level="3"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#median')).toHaveValue('1');
+  await page.locator('[data-mode="chroma"]').click(); await ready(page);
+  await range(page, 'chroma', -100);
+  await page.locator('[data-mode="color"]').click(); await ready(page);
+  expect(await pixel(page, 2, 2)).toEqual([96, 128, 64, 255]);
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#save').click();
+  expect((await downloadPromise).suggestedFilename()).toBe('still-color-study.png');
+  await page.locator('#undo').click(); await ready(page);
+  await expect(page.locator('[data-mode="chroma"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#chroma')).toHaveValue('-100');
+  await page.locator('#redo').click(); await ready(page);
+  expect(await pixel(page, 2, 2)).toEqual([96, 128, 64, 255]);
 });

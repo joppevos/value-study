@@ -17,9 +17,9 @@ export function sanitizeState(state) {
     if (state.settings[key] !== undefined && !valid.includes(state.settings[key])) return null;
     if (state.settings[key] !== undefined) settings[key] = state.settings[key];
   }
-  // Color study is deferred. Restore its framing and value choices without
-  // silently applying hidden palette, smoothing-method, or color edits.
-  if (settings.mode === 'color') { settings.mode = 'value'; settings.chroma = 0; }
+  // Restore the simple Color view without hidden palette or intensity edits.
+  // Keep source-color smoothing as the only method exposed in the app.
+  if (settings.mode === 'color') settings.chroma = 0;
   settings.palette = 0;
   settings.smoothing = 'source';
   settings.flip = state.settings.flip === true;

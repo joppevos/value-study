@@ -47,8 +47,9 @@ document.querySelector('#app').innerHTML = `
       <div class="panel-heading"><h2>Study the shapes</h2><button id="reset" disabled>Reset</button></div>
       <div class="history-controls" role="group" aria-label="Adjustment history"><button id="undo" class="button" disabled>Undo</button><button id="redo" class="button" disabled>Redo</button></div>
       <fieldset id="controls" disabled>
-        <div class="segments mode-switch" id="modes" role="group" aria-label="Study view"><button data-mode="value" class="active" aria-pressed="true">◐ Value</button><button data-mode="chroma" aria-pressed="false">Chroma</button></div>
+        <div class="segments mode-switch" id="modes" role="group" aria-label="Study view"><button data-mode="value" class="active" aria-pressed="true">◐ Value</button><button data-mode="color" aria-pressed="false">Color</button><button data-mode="chroma" aria-pressed="false">Chroma</button></div>
         <section class="control-section" id="value-controls"><div class="control-title"><span class="control-name">Value groups</span></div><p>Value means how light or dark a color appears.</p><div class="segments" id="levels" role="group" aria-label="Number of value groups">${[[0, 'Full'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [7, '7']].map(([value, label]) => `<button data-level="${value}" class="${value === 0 ? 'active' : ''}" aria-pressed="${value === 0}">${label}</button>`).join('')}</div><details id="distribution-details"><summary>Value distribution</summary><figure id="histogram-figure"><figcaption>Adjusted values before grouping</figcaption><svg id="histogram" viewBox="0 0 256 80" role="img" aria-label="Value histogram: dark at left, light at right"></svg></figure></details><div id="value-strip" class="value-strip" aria-hidden="true"></div><details id="boundary-details" hidden><summary>Adjust value boundaries</summary><p>Move each cutoff to change the size of the value areas. Cutoffs cannot cross.</p><div id="boundaries"></div><button id="even-boundaries" class="text-button">Space boundaries evenly</button></details><details id="group-gray-details" hidden><summary>Display grays & outlines</summary><p>Change group grays without moving their boundaries. Outlines appear only in the preview.</p><div id="group-grays"></div><label class="check-label"><input id="outlines" type="checkbox"/> Show group outlines</label></details><div id="group-areas" hidden><p class="group-help">Tap a group to isolate its shapes.</p><div id="group-buttons" class="group-buttons" role="group" aria-label="Value group areas"></div><button id="show-groups" class="text-button" hidden>Show all groups</button></div></section>
+        <section id="color-help" class="control-section" hidden><p>Keep the photo’s colors while smoothing small details. Value groups stay saved for Value view.</p></section>
         <section id="chroma-help" class="control-section" hidden><div class="control-title"><span class="control-name">Color intensity</span></div><p>Chroma means muted or intense color. Black shows neutral areas. White shows OKLCH chroma of 0.4 or higher. This is not a value view.</p></section>
         <section id="chroma-adjustment" class="control-section" hidden>${slider('chroma', 'Chroma adjustment', -100, 100, 0)}<p>Adjusts OKLCH chroma while keeping model lightness before rounding. Display limits can reduce the requested intensity.</p><p id="gamut-note" role="status"></p></section>
         <details class="control-section" id="light-adjustments"><summary>Adjust light & shadow</summary>${slider('brightness', 'Brightness', -100, 100, 0)}${slider('contrast', 'Contrast', -100, 100, 0)}</details>
@@ -155,7 +156,7 @@ function receiveStudy({ data }) {
   counts = data.counts;
   $('dimensions').textContent = `${data.width} × ${data.height}`;
   $('busy').hidden = true; $('save').disabled = false;
-  $('status').textContent = settings.mode === 'chroma' ? 'Chroma · Muted to intense.' : settings.levels ? `${settings.levels} values · Tap a group to isolate it.` : 'Grayscale · Every shade has a place.';
+  $('status').textContent = settings.mode === 'chroma' ? 'Chroma · Muted to intense.' : settings.mode === 'color' ? 'Color · See the larger color shapes.' : settings.levels ? `${settings.levels} values · Tap a group to isolate it.` : 'Grayscale · Every shade has a place.';
   $('gamut-note').textContent = data.gamutCount ? `${(data.gamutCount / (data.width * data.height) * 100).toFixed(1)}% of pixels reached the display limit. Their chroma was reduced at the same model lightness.` : 'The requested colors fit the display range.';
   drawHistogram(); updateGroups();
   if (sampling && samplePoint) takeSample();
@@ -234,8 +235,9 @@ function updateControls() {
     button.classList.toggle('active', active); button.setAttribute('aria-pressed', active);
   });
   $('value-controls').hidden = settings.mode !== 'value';
+  $('color-help').hidden = settings.mode !== 'color';
   $('chroma-help').hidden = settings.mode !== 'chroma';
-  $('chroma-adjustment').hidden = settings.mode === 'value';
+  $('chroma-adjustment').hidden = settings.mode !== 'chroma';
   $('flip').setAttribute('aria-pressed', String(settings.flip));
   $('group-gray-details').hidden = settings.levels < 2;
   document.querySelectorAll('[data-level]').forEach(button => {
@@ -254,7 +256,12 @@ function updateControls() {
 
 $('modes').onclick = event => {
   const button = event.target.closest('[data-mode]'); if (!button) return;
-  settings.mode = button.dataset.mode; highlightedGroup = null; counts = [];
+  settings.mode = button.dataset.mode;
+  // The simple Color view never applies an intensity edit from Chroma view.
+  if (settings.mode === 'color') {
+    settings.chroma = 0; $('chroma').value = 0; $('chroma-value').textContent = '0';
+  }
+  highlightedGroup = null; counts = [];
   updateControls(); render();
 };
 $('levels').onclick = event => {

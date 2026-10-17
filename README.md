@@ -36,6 +36,10 @@ You can also use these tools:
 - Use Undo, Redo, or Reset to revisit a decision.
 - Open Compare, frame & save for a second photograph, grids, saved variations, and local storage.
 
+Color view keeps the photograph in color while Detail smoothing removes small details.
+Switch between Color and Value to compare color shapes with light and dark shapes.
+Value groups stay saved when you switch views.
+
 Chroma means how muted or intense a color appears.
 Chroma view shows neutral areas as dark and intense areas as light.
 Its light areas do not represent light values in the photograph.
@@ -57,9 +61,9 @@ Automated tests cover image processing and browser behavior at desktop, phone, a
 Physical iPhone and iPad testing remains open.
 Large exports at the original image size can use too much device memory.
 
-The Color tab and controls that reduce the number of colors are deferred.
+Controls that reduce the number of colors remain deferred.
 Some results gave confusing color relationships in green images and skin tones.
-Color sampling and Chroma view remain available.
+The simple Color view uses detail smoothing without reducing the image to a fixed number of colors.
 The reason for this decision is in [AGENTS.md](AGENTS.md), and planned work is in [TODO.md](TODO.md).
 
 ## Run Still locally

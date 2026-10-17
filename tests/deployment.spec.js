@@ -19,6 +19,10 @@ test('loads the processing worker and exports a study from the published path', 
   await page.goto('./');
   await openPhoto(page);
   await expect(page.locator('#status')).toContainText('Grayscale');
+  await page.locator('[data-mode="color"]').tap();
+  await expect(page.locator('#status')).toContainText('Color');
+  expect(await page.locator('#preview').evaluate(canvas => [...canvas.getContext('2d').getImageData(10, 10, 1, 1).data])).toEqual([255, 0, 0, 255]);
+  await page.locator('[data-mode="value"]').tap();
   await page.locator('[data-level="3"]').tap();
   await expect(page.locator('#save')).toBeEnabled();
   expect(await page.locator('#preview').evaluate(canvas => [...canvas.getContext('2d').getImageData(10, 10, 1, 1).data])).toEqual([0, 0, 0, 255]);

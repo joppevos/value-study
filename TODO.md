@@ -5,19 +5,19 @@ Paint inventories, mixing recipes, live camera filters, and accuracy scores are 
 
 ## Implementation and validation status
 
-The original feature backlog was implemented as of 2026-10-17; the Color tab is now deliberately deferred. Four mobile release issues remain open below. Checked items describe code, not approval from artist trials or physical-device tests.
-Value and Chroma views remain available, alongside original-photo color sampling. Extra composition, comparison, and storage tools live in collapsed sections.
+The original feature backlog was implemented as of 2026-10-17; palette reduction remains deliberately deferred. Four mobile release issues remain open below. Checked items describe code, not approval from artist trials or physical-device tests.
+Value, Color, and Chroma views remain available, alongside original-photo color sampling. Extra composition, comparison, and storage tools live in collapsed sections.
 Relevant tests cover known pixels and image edges. Browser and device validation remain open at the end of this plan.
 
 ## Focused artist workflow
 
-- [x] Remove the Color tab and its palette and smoothing-method controls. Keep the processing code and pixel tests for future work.
+- [x] Add a simple Color view for detail smoothing in color. Keep palette reduction and the smoothing-method selector out of the interface.
 - [x] Keep original comparison, squint, and color sampling together beneath the image with touch-sized buttons.
 - [x] Keep value groups visible and put the histogram and light and shadow adjustments behind disclosures.
-- [x] Reopen older Color studies in Value view without applying hidden palette or color edits. Retain framing and value settings.
-- [ ] Revisit Color study only after artist trials with green images, skin tones, and real paintings show useful color relationships. See AGENTS.md for the decision.
+- [x] Reopen older Color studies in the simple Color view without hidden palette or chroma edits. Retain framing, smoothing, and value settings.
+- [ ] Revisit palette reduction only after artist trials with green images, skin tones, and real paintings show useful color relationships. See AGENTS.md for the decision.
 
-Historical checked Color implementation items below describe retained processing code, not currently exposed controls.
+Historical checked palette implementation items below describe retained processing code, not currently exposed controls.
 
 ## Hosting and custom domain
 
@@ -130,7 +130,7 @@ The export memory limit above remains a release priority.
 
 ## Outstanding validation and measurement
 
-On 2026-10-17, all 29 unit tests, all 40 Chromium browser cases, and the production build passed.
+On 2026-10-17, all 29 unit tests, all 42 Chromium browser cases, and the production build passed.
 Browser coverage uses desktop and phone screen sizes and includes legacy Color-study restoration and native SVG export. Palette regressions remain covered by pixel tests.
 After simplifying the workspace, 15 targeted WebKit checks passed across phone, iPad portrait, and iPad landscape layouts.
 The mobile review ran 54 WebKit scenarios across phone, iPad portrait, and iPad landscape layouts. Of those, 51 passed.
