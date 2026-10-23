@@ -12,6 +12,7 @@ Relevant tests cover known pixels and image edges. Browser and device validation
 ## Focused artist workflow
 
 - [x] Add a simple Color view for detail smoothing in color. Keep palette reduction and the smoothing-method selector out of the interface.
+- [x] Add a compact photo value scale with estimated Munsell readings, independent swatch counts, and tap, drag, or keyboard sampling.
 - [x] Keep original comparison, squint, and color sampling together beneath the image with touch-sized buttons.
 - [x] Keep value groups visible and put the histogram and light and shadow adjustments behind disclosures.
 - [x] Reopen older Color studies in the simple Color view without hidden palette or chroma edits. Retain framing, smoothing, and value settings.
@@ -130,7 +131,7 @@ The export memory limit above remains a release priority.
 
 ## Outstanding validation and measurement
 
-On 2026-10-17, all 29 unit tests, all 42 Chromium browser cases, and the production build passed.
+On 2026-10-23, all 32 unit tests, all 44 Chromium browser cases, and the production build passed.
 Browser coverage uses desktop and phone screen sizes and includes legacy Color-study restoration and native SVG export. Palette regressions remain covered by pixel tests.
 After simplifying the workspace, 15 targeted WebKit checks passed across phone, iPad portrait, and iPad landscape layouts.
 The mobile review ran 54 WebKit scenarios across phone, iPad portrait, and iPad landscape layouts. Of those, 51 passed.

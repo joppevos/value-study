@@ -44,6 +44,24 @@ Chroma means how muted or intense a color appears.
 Chroma view shows neutral areas as dark and intense areas as light.
 Its light areas do not represent light values in the photograph.
 
+## Sample a photo value
+
+Select Sample value, then press or drag across the image.
+The gray scale highlights the nearest swatch and keeps the reading after release.
+Use arrow keys on the image to move the sample point.
+
+The estimated Munsell value runs from 0 for black to 10 for white.
+The default scale shows 11 swatches, including both endpoints.
+Scale steps changes the swatch count without changing the reading or the value groups.
+
+Original photo is the default sample source.
+Processed study samples the result after adjustments instead.
+Each sample averages light from an area of up to 5 × 5 pixels.
+
+The estimate assumes sRGB, a standard format for screen colors.
+It uses the [Munsell value and luminance relationship](https://colour.readthedocs.io/en/latest/_modules/colour/colorimetry/luminance.html#luminance_ASTMD1535).
+It differs from the existing 0–100 grayscale reading and does not measure physical paint.
+
 ## Your photographs
 
 Still processes photographs on your device and does not upload them.

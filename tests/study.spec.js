@@ -237,7 +237,7 @@ test('chroma stays distinct from value grouping', async ({ page }) => {
   await expect(page.locator('#light-adjustments')).not.toHaveAttribute('open');
   await expect(page.locator('#distribution-details')).not.toHaveAttribute('open');
   const actions = await page.locator('.sample-toolbar button').evaluateAll(buttons => buttons.map(button => ({ width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height })));
-  expect(actions).toHaveLength(3);
+  expect(actions).toHaveLength(4);
   for (const action of actions) { expect(action.width).toBeGreaterThanOrEqual(44); expect(action.height).toBeGreaterThanOrEqual(44); }
   await page.locator('[data-mode="chroma"]').click(); await ready(page);
   await range(page, 'chroma', 100);
@@ -451,4 +451,43 @@ test('smooths color shapes without palette reduction and keeps value groups', as
   await expect(page.locator('#chroma')).toHaveValue('-100');
   await page.locator('#redo').click(); await ready(page);
   expect(await pixel(page, 2, 2)).toEqual([96, 128, 64, 255]);
+});
+
+test('samples photo values with a persistent scale independent of value groups', async ({ page }) => {
+  await load(page);
+  await page.locator('[data-level="3"]').click(); await ready(page);
+  await page.locator('#value-toggle').click();
+  await expect(page.locator('#value-sampler')).toBeVisible();
+  await expect(page.locator('#sampler')).toBeHidden();
+  await expect(page.locator('.value-step')).toHaveCount(11);
+  await sample(page, 1 / 6);
+  await expect(page.locator('#value-reading')).toContainText('5.2 / 10');
+  await expect(page.locator('#photo-value-badge')).toBeVisible();
+  await expect(page.locator('#value-reading')).toContainText('Original');
+  await expect(page.locator('.value-step[aria-current="true"]')).toHaveText('5');
+  await page.locator('#value-steps').selectOption('5');
+  await expect(page.locator('.value-step')).toHaveCount(5);
+  await expect(page.locator('#value-reading')).toContainText('5.2 / 10');
+  await expect(page.locator('[data-level="3"]')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#value-source').selectOption('study');
+  await expect(page.locator('#value-reading')).toContainText('0.0 / 10');
+  await page.locator('#preview').focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#value-reading')).toContainText('Study');
+  await page.locator('#value-source').selectOption('original');
+  // Real pointer movement below also exercises capture and persistence on release.
+  await page.locator('#preview').scrollIntoViewIfNeeded();
+  const box = await page.locator('#preview').boundingBox();
+  await page.mouse.move(box.x + box.width / 6, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 5 / 6, box.y + box.height / 2, { steps: 5 });
+  await expect(page.locator('#value-reading')).toContainText('3.2 / 10');
+  await page.mouse.up();
+  await expect(page.locator('#value-reading')).toContainText('3.2 / 10');
+  await page.locator('#clear-value').click();
+  await expect(page.locator('.value-step[aria-current]')).toHaveCount(0);
+  await expect(page.locator('#sample-marker')).toBeHidden();
+  await sample(page, 1 / 6);
+  await page.locator('#file').setInputFiles(fixture); await ready(page);
+  await expect(page.locator('#value-reading')).toContainText('Press or drag');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

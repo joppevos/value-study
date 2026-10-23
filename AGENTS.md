@@ -38,6 +38,8 @@ Palette reduction and the smoothing-method selector remain deferred. Palette red
 
 Keep palette-processing code and pixel tests for future work. Saved Color studies reopen in the simple Color view without hidden palette or chroma edits. Preserve framing, detail smoothing, and value settings. Show chroma adjustment only in Chroma view and clear it when entering Color view. Undo restores the earlier adjustment.
 
+Photo value sampling estimates Munsell value from 0 black to 10 white. Keep it separate from the existing weighted grayscale reading. Swatch count changes the comparison scale, not image processing or value groups. Label readings as photo estimates, not measurements of paint.
+
 Before adding more color controls, test real references with artists and explain separately what palette reduction and detail smoothing change. Performance work and physical-device validation remain tracked in TODO.md.
 
 ## Engineering guidance

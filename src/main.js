@@ -4,6 +4,7 @@ import { sampleArea, compareColors } from './color.js';
 import { studyDefaults } from './study.js';
 import { sanitizeState } from './state.js';
 import { setupWorkspace } from './workspace.js';
+import { samplePhotoValue, valueScale, nearestValueStep } from './value-scale.js';
 
 const defaults = studyDefaults;
 let settings = { ...defaults };
@@ -12,6 +13,7 @@ let displaySource = null, previewImage = null, currentResult = null, originalFil
 let outlines = false;
 let comparing = false, processing = false, counts = [], highlightedGroup = null;
 let sampling = false, sampleSource = 'original', currentSample = null, pinnedSample = null, samplePoint = null;
+let sampleKind = 'color', samplePointer = null;
 const boundariesByLevel = new Map();
 let worker;
 const icon = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5"/></svg>`;
@@ -29,12 +31,19 @@ document.querySelector('#app').innerHTML = `
       <div class="stage-top"><span id="image-label">YOUR NEXT STUDY</span><span id="dimensions">A fresh perspective</span><button id="change-image" class="button upload secondary" aria-label="Open another image">${icon} Open image</button></div>
       <div class="comparison-pair"><div class="viewport" id="dropzone">
         <div class="empty"><div class="empty-art" aria-hidden="true"><span></span><span></span><span></span></div><h2>Start with something you see.</h2><p>Your painting, a reference, a little inspiration.<br>Take a photo or drop an image here.</p><div class="empty-actions"><button class="button primary upload">${icon} Choose image</button><button class="button camera">Take a photo</button></div><small>JPG, PNG, WebP & other browser-supported images</small></div>
-        <div class="canvas-wrap" hidden><canvas id="preview" tabindex="0" aria-label="Study preview. Enable Sample colors to inspect colors with a tap or keyboard." aria-describedby="sample-help"></canvas><span id="sample-marker" hidden aria-hidden="true"></span><svg id="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+        <div class="canvas-wrap" hidden><canvas id="preview" tabindex="0" aria-label="Study preview. Enable Sample colors to inspect colors with a tap or keyboard." aria-describedby="sample-help"></canvas><span id="sample-marker" hidden aria-hidden="true"></span><span id="photo-value-badge" hidden></span><svg id="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg></div>
         <div id="busy" hidden>Developing your study…</div>
       </div>
       <section id="companion" class="companion" hidden aria-label="Second image"><h2 id="companion-label">Painting</h2><canvas id="companion-preview" aria-label="Second study"></canvas><p id="companion-status" role="status"></p></section></div>
       <div class="stage-bottom"><span id="status" role="status" aria-live="polite">A little distance can change how you see.</span></div>
-      <div class="sample-toolbar" role="group" aria-label="Observe and compare"><button id="compare" class="button" disabled>Hold to see original</button><button id="squint" class="button" disabled aria-pressed="false">Hold to squint</button><button id="sample-toggle" class="button" aria-pressed="false" disabled>⊙ Sample colors</button><span id="sample-help">Compare colors from a small area, not a single pixel.</span></div>
+      <div class="sample-toolbar" role="group" aria-label="Observe and compare"><button id="compare" class="button" disabled>Hold to see original</button><button id="squint" class="button" disabled aria-pressed="false">Hold to squint</button><button id="value-toggle" class="button" aria-pressed="false" disabled>Sample value</button><button id="sample-toggle" class="button" aria-pressed="false" disabled>⊙ Sample colors</button><span id="sample-help">Compare colors from a small area, not a single pixel.</span></div>
+      <section id="value-sampler" class="value-sampler" aria-label="Photo value scale" hidden>
+        <div class="value-sample-heading"><h2>Photo value</h2><label for="value-source">Sample from<select id="value-source"><option value="original">Original photo</option><option value="study">Processed study</option></select></label></div>
+        <p id="value-reading" role="status" aria-live="polite">Press or drag on the image to sample a small area.</p>
+        <div id="sample-value-scale" class="sample-value-scale" role="img" aria-label="Munsell gray scale from 0 black to 10 white"></div>
+        <div class="value-scale-options"><label for="value-steps">Scale steps<select id="value-steps"><option value="5">5 swatches</option><option value="10">10 swatches</option><option value="11" selected>11 swatches (0–10)</option></select></label><button id="clear-value" class="text-button">Clear sample</button></div>
+        <p class="sample-note">Estimated Munsell value of the photo, from 0 black to 10 white. Swatch count does not change the image or value groups. Lighting, exposure, and your screen affect comparison.</p>
+      </section>
       <details class="workspace-tools"><summary>Compare, frame & save</summary><div id="workspace-tools"></div></details>
       <section id="sampler" class="sampler" aria-label="Color comparison" hidden>
         <div class="sample-heading"><div><h2>Look closer.</h2><p>Tap the image. Pin A, then choose B.</p></div><label class="sample-source-label" for="sample-source">Sample from<select id="sample-source"><option value="original">Original photo</option><option value="study">Processed study</option></select></label></div>
@@ -156,7 +165,7 @@ function receiveStudy({ data }) {
   counts = data.counts;
   $('dimensions').textContent = `${data.width} × ${data.height}`;
   $('busy').hidden = true; $('save').disabled = false;
-  $('status').textContent = settings.mode === 'chroma' ? 'Chroma · Muted to intense.' : settings.mode === 'color' ? 'Color · See the larger color shapes.' : settings.levels ? `${settings.levels} values · Tap a group to isolate it.` : 'Grayscale · Every shade has a place.';
+
   $('gamut-note').textContent = data.gamutCount ? `${(data.gamutCount / (data.width * data.height) * 100).toFixed(1)}% of pixels reached the display limit. Their chroma was reduced at the same model lightness.` : 'The requested colors fit the display range.';
   drawHistogram(); updateGroups();
   if (sampling && samplePoint) takeSample();
@@ -181,6 +190,7 @@ function draw() {
   if (!source) return;
   const original = displaySource;
   if (!original) return;
+  $('status').textContent = sampling ? `${sampleSource === 'original' ? 'Original photo' : 'Processed study'} · Sampling ${sampleKind === 'value' ? 'value' : 'colors'}.` : settings.mode === 'chroma' ? 'Chroma · Muted to intense.' : settings.mode === 'color' ? 'Color · See the larger color shapes.' : settings.levels ? `${settings.levels} values · Tap a group to isolate it.` : 'Grayscale · Every shade has a place.';
   ctx.putImageData(comparing || (sampling && sampleSource === 'original') ? original : sampling ? (processedImage ?? original) : (previewImage ?? processedImage ?? original), 0, 0);
 }
 
@@ -207,7 +217,7 @@ async function load(file) {
     document.body.classList.add('has-image');
     document.querySelector('.empty').hidden = true;
     document.querySelector('.canvas-wrap').hidden = false;
-    for (const id of ['controls', 'reset', 'compare', 'sample-toggle', 'squint']) $(id).disabled = false;
+    for (const id of ['controls', 'reset', 'compare', 'sample-toggle', 'value-toggle', 'squint']) $(id).disabled = false;
     $('image-label').textContent = file.name || 'YOUR PHOTO';
     $('dimensions').textContent = `${canvas.width} × ${canvas.height}`;
     $('error').hidden = true;
@@ -345,36 +355,57 @@ $('squint').onkeyup = () => squint(false);
 window.addEventListener('blur', () => squint(false));
 
 function clearSamples() {
+  if (samplePointer !== null && canvas.hasPointerCapture(samplePointer)) canvas.releasePointerCapture(samplePointer);
+  samplePointer = null;
   currentSample = null; pinnedSample = null; samplePoint = null;
   $('sample-marker').hidden = true; updateSamples();
 }
-$('sample-toggle').onclick = () => {
-  sampling = !sampling;
-  $('sample-toggle').setAttribute('aria-pressed', sampling);
-  $('sampler').hidden = !sampling;
+function toggleSampling(kind) {
+  sampling = !(sampling && sampleKind === kind);
+  sampleKind = kind;
+  $('sample-toggle').setAttribute('aria-pressed', sampling && kind === 'color');
+  $('value-toggle').setAttribute('aria-pressed', sampling && kind === 'value');
+  $('sampler').hidden = !sampling || kind !== 'color';
+  $('value-sampler').hidden = !sampling || kind !== 'value';
   canvas.classList.toggle('sampling', sampling);
-  canvas.setAttribute('aria-label', sampling ? 'Sample colors. Tap to sample. Arrow keys move the sample point. Enter samples the selected area.' : 'Study preview. Enable Sample colors to inspect colors.');
+  canvas.setAttribute('aria-label', sampling ? 'Sample the image. Press or drag to sample. Arrow keys move the sample point. Enter samples the selected area.' : 'Study preview. Enable Sample colors or Sample value to inspect the image.');
   $('sample-marker').hidden = !sampling || !samplePoint;
-  draw();
-};
-$('sample-source').onchange = event => {
+  updateValueScale(); draw();
+}
+$('sample-toggle').onclick = () => toggleSampling('color');
+$('value-toggle').onclick = () => toggleSampling('value');
+for (const id of ['sample-source', 'value-source']) $(id).onchange = event => {
   sampleSource = event.target.value;
+  $('sample-source').value = sampleSource; $('value-source').value = sampleSource;
   if (samplePoint) takeSample();
   draw();
 };
+$('value-steps').onchange = updateValueScale;
+$('clear-value').onclick = clearSamples;
+function updateValueScale() {
+  const steps = Number($('value-steps').value), value = currentSample?.photoValue;
+  const match = value === undefined ? -1 : nearestValueStep(value, steps);
+  const scale = valueScale(steps);
+  $('photo-value-badge').hidden = !sampling || sampleKind !== 'value' || value === undefined;
+  $('photo-value-badge').textContent = value === undefined ? '' : `Photo value ≈ ${value.toFixed(1)} / 10`;
+  $('sample-value-scale').innerHTML = scale.map((step, i) => `<span class="value-step${i === match ? ' matched' : ''}" style="--gray:rgb(${step.gray},${step.gray},${step.gray})" ${i === match ? 'aria-current="true"' : ''}><span class="value-chip"></span><span>${Number(step.value.toFixed(1))}</span></span>`).join('');
+  $('sample-value-scale').setAttribute('aria-label', value === undefined ? 'Munsell gray scale from 0 black to 10 white. No sample selected.' : `Nearest swatch: ${scale[match].value.toFixed(1)}. Estimated photo value: ${value.toFixed(1)} out of 10.`);
+  $('value-reading').textContent = value === undefined ? 'Press or drag on the image to sample a small area.' : `Estimated photo value ${value.toFixed(1)} / 10 · ${currentSample.origin} · Nearest swatch ${Number(scale[match].value.toFixed(1))}`;
+  $('clear-value').disabled = value === undefined;
+}
 function takeSample() {
   if (!source || !samplePoint) return;
   const image = sampleSource === 'original' ? displaySource : processedImage;
   if (!image || finishedId !== requestId) return;
   samplePoint.x = Math.max(0, Math.min(image.width - 1, samplePoint.x));
   samplePoint.y = Math.max(0, Math.min(image.height - 1, samplePoint.y));
-  currentSample = { ...sampleArea(image.data, image.width, image.height, samplePoint.x, samplePoint.y), origin: sampleSource === 'original' ? 'Original' : 'Study' };
+  currentSample = { ...sampleArea(image.data, image.width, image.height, samplePoint.x, samplePoint.y), photoValue: samplePhotoValue(image.data, image.width, image.height, samplePoint.x, samplePoint.y), origin: sampleSource === 'original' ? 'Original' : 'Study' };
   $('sample-marker').hidden = !sampling;
   $('sample-marker').style.left = `${(samplePoint.x + 0.5) / canvas.width * 100}%`;
   $('sample-marker').style.top = `${(samplePoint.y + 0.5) / canvas.height * 100}%`;
   updateSamples();
 }
-canvas.onclick = event => {
+function sampleAt(event) {
   if (!sampling || !source) return;
   const rect = canvas.getBoundingClientRect();
   samplePoint = {
@@ -382,7 +413,20 @@ canvas.onclick = event => {
     y: Math.min(canvas.height - 1, Math.max(0, Math.floor((event.clientY - rect.top) / rect.height * canvas.height))),
   };
   takeSample();
+}
+canvas.onclick = sampleAt;
+canvas.onpointerdown = event => {
+  if (!sampling || !source || event.button !== 0 || !event.isPrimary) return;
+  event.preventDefault(); canvas.focus({ preventScroll: true });
+  samplePointer = event.pointerId; canvas.setPointerCapture(event.pointerId); sampleAt(event);
 };
+canvas.onpointermove = event => { if (event.pointerId === samplePointer) sampleAt(event); };
+canvas.onpointerup = event => {
+  if (event.pointerId !== samplePointer) return;
+  sampleAt(event); samplePointer = null;
+  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+};
+for (const name of ['pointercancel', 'lostpointercapture']) canvas.addEventListener(name, () => { samplePointer = null; });
 canvas.onkeydown = event => {
   if (!sampling || !source || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', ' '].includes(event.key)) return;
   event.preventDefault();
@@ -402,6 +446,7 @@ function sampleCard(sample, label, placeholder) {
   return `<div class="sample-card"><div class="sample-swatches"><span style="background:${sample.hex}"></span><span style="background:rgb(${gray},${gray},${gray})" title="Grayscale value"></span></div><div class="sample-card-title"><span>${label} <small>${sample.origin}</small></span><code>${sample.hex.toUpperCase()}</code></div><dl><div><dt>Value</dt><dd>${sample.value.toFixed(1)}<small> / 100</small></dd></div><div><dt>Chroma</dt><dd>${sample.chroma.toFixed(3)}</dd></div><div><dt>Hue</dt><dd>${sample.hue === null ? 'Neutral' : `${Math.round(sample.hue)}°`}</dd></div></dl></div>`;
 }
 function updateSamples() {
+  updateValueScale();
   $('sample-cards').innerHTML = sampleCard(pinnedSample, 'A', 'Pin a color to compare.') + sampleCard(currentSample, 'B', 'Tap the image to sample.');
   $('pin').disabled = !currentSample;
   $('sample-comparison').textContent = pinnedSample && currentSample ? compareColors(pinnedSample, currentSample) : 'Sample the lights, shadows, or a color that feels hard to judge.';
