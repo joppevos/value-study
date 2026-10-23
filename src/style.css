@@ -182,3 +182,10 @@ canvas.sampling { touch-action:none; }
 }
 
 #photo-value-badge { position:absolute; top:8px; right:8px; pointer-events:none; padding:6px 9px; background:#fffffff0; color:#30352e; border-radius:4px; font-size:12px; box-shadow:0 1px 4px #0002; }
+
+#grid-controls summary { justify-content:space-between; }
+#grid-status { color:#737b65; font-size:12px; }
+#grid-controls .range-control label { flex-direction:row; align-items:center; justify-content:space-between; }
+#grid-controls input[type="range"] { min-height:44px; background:linear-gradient(#dce0d2,#dce0d2) center / 100% 4px no-repeat; }
+#grid-controls input[type="range"]:disabled { opacity:.4; cursor:default; }
+#grid-overlay path { vector-effect:non-scaling-stroke; stroke-width:1; filter:drop-shadow(0 0 1px #000); }

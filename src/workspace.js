@@ -25,7 +25,7 @@ async function decode(file, maxLongest = 1600) {
 
 export function setupWorkspace(app) {
   $('workspace-tools').innerHTML = `
-    <div class="tool-row"><button id="focus-view" class="button" aria-pressed="false">Hide controls</button><label>Surround<select id="surround"><option value="default">Soft gray</option><option value="white">White</option><option value="gray">Middle gray</option><option value="dark">Dark</option></select></label><label>Grid<select id="grid"><option value="none">None</option><option value="thirds">Thirds</option><option value="center">Center</option></select></label></div>
+    <div class="tool-row"><button id="focus-view" class="button" aria-pressed="false">Hide controls</button><label>Surround<select id="surround"><option value="default">Soft gray</option><option value="white">White</option><option value="gray">Middle gray</option><option value="dark">Dark</option></select></label></div>
     <details><summary>Reference & painting</summary><p>Open a second photo to compare large shapes. Controls and export apply to the image on the left. Switch images to edit the other photo.</p><div class="tool-row"><button id="add-companion" class="button" disabled>Open painting</button><button id="switch-images" class="button" disabled>Switch images</button><button id="remove-companion" class="button" disabled>Close comparison</button></div><label class="check-label"><input id="link-adjustments" type="checkbox"/> Link study adjustments</label><p>Both images share the same study view. Linked adjustments exclude framing. They do not correct exposure or lighting differences.</p><input id="companion-file" type="file" accept="image/*" hidden/>
     <details><summary>Align the second preview</summary><p>Move and scale the second preview to compare corresponding areas. Alignment affects this preview only.</p><label>Horizontal offset (%)<input id="align-x" type="range" min="-50" max="50" value="0"/></label><label>Vertical offset (%)<input id="align-y" type="range" min="-50" max="50" value="0"/></label><label>Scale (%)<input id="align-scale" type="range" min="25" max="200" value="100"/></label><button id="align-reset" class="button">Reset alignment</button></details></details>
     <details><summary>Study variations</summary><p>Keep up to eight variations for this photo during the session. Load one or place it beside the current study.</p><button id="add-variation" class="button" disabled>Keep variation</button><div id="variations" class="saved-list"></div></details>
@@ -44,10 +44,18 @@ export function setupWorkspace(app) {
   $('focus-view').onclick = () => focus(true); exit.onclick = () => focus(false);
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !exit.hidden) focus(false); });
   $('surround').onchange = () => document.querySelector('.comparison-pair').dataset.surround = $('surround').value;
-  $('grid').onchange = () => {
-    const positions = $('grid').value === 'thirds' ? [100 / 3, 200 / 3] : $('grid').value === 'center' ? [50] : [];
+  function updateGrid() {
+    const divisions = Number($('grid').value), visible = $('show-grid').checked;
+    $('grid').disabled = !visible;
+    $('grid').setAttribute('aria-valuetext', `${divisions} by ${divisions} divisions`);
+    $('grid-count').textContent = `${divisions} × ${divisions}`;
+    $('grid-status').textContent = visible ? `${divisions} × ${divisions}` : 'Off';
+    const positions = visible ? Array.from({ length: divisions - 1 }, (_, i) => (i + 1) * 100 / divisions) : [];
     $('grid-overlay').innerHTML = positions.map(p => `<path d="M${p} 0V100M0 ${p}H100"/>`).join('');
-  };
+  }
+  $('grid').oninput = updateGrid;
+  $('show-grid').onchange = updateGrid;
+  updateGrid();
 
   let companion = null, companionWorker = null, companionGeneration = 0, loadGeneration = 0, swapping = false;
   let variations = [], exportWorker = null;

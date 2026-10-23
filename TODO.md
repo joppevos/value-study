@@ -92,7 +92,7 @@ Matching adjustment values does not correct differences in exposure or lighting 
 - [x] Offer white, middle gray, and dark preview backgrounds. Keep these separate from transparency compositing.
 - [x] Add a histogram of adjusted grayscale values before grouping. Compute it in the worker after brightness, contrast, and smoothing.
 - [x] Show value boundaries on the histogram and keep their sliders connected to the result.
-- [x] Add thirds and center grids. Exclude them from samples and exports.
+- [x] Add a separate Grid section with a show/hide control and a slider for 2 × 2, 3 × 3, and 4 × 4 divisions. Exclude grid lines from samples and exports.
 
 ## Priority 4: Understand color intensity
 

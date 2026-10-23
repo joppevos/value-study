@@ -322,17 +322,40 @@ test('local gallery stores adjustments only by default and persists photos only 
   await expect(page.locator('#save')).toBeDisabled();
 });
 
-test('grids and backgrounds are preview-only and focus view has an exit', async ({ page }) => {
+test('grid divisions follow the preview without changing pixels or samples', async ({ page }) => {
   await load(page); await reveal(page, 'grid');
-  const before = await pixel(page);
-  await page.locator('#grid').selectOption('thirds');
-  await expect(page.locator('#grid-overlay path')).toHaveCount(2);
+  const before = await page.locator('#preview').evaluate(canvas => canvas.toDataURL());
+  await expect(page.locator('#grid')).toBeDisabled();
+  await page.locator('#show-grid').check();
+  for (const count of [2, 3, 4]) {
+    await range(page, 'grid', count);
+    await expect(page.locator('#grid-count')).toHaveText(`${count} × ${count}`);
+    await expect(page.locator('#grid-status')).toHaveText(`${count} × ${count}`);
+    await expect(page.locator('#grid-overlay path')).toHaveCount(count - 1);
+    const lines = await page.locator('#grid-overlay path').evaluateAll(paths => paths.map(path => path.getAttribute('d')));
+    for (let i = 1; i < count; i++) expect(lines[i - 1]).toBe(`M${i * 100 / count} 0V100M0 ${i * 100 / count}H100`);
+  }
+  const aligned = await page.evaluate(() => {
+    const image = document.querySelector('#preview').getBoundingClientRect();
+    const grid = document.querySelector('#grid-overlay').getBoundingClientRect();
+    return ['x', 'y', 'width', 'height'].every(key => Math.abs(image[key] - grid[key]) < 1);
+  });
+  expect(aligned).toBe(true);
+  await reveal(page, 'surround');
   await page.locator('#surround').selectOption('dark');
-  expect(await pixel(page)).toEqual(before);
+  expect(await page.locator('#preview').evaluate(canvas => canvas.toDataURL())).toBe(before);
+  await page.locator('#sample-toggle').click(); await sample(page, 0.5);
+  await expect(page.locator('#sample-cards')).toContainText('#00FF00');
+  await page.locator('#sample-toggle').click();
   await page.locator('#focus-view').click();
   await expect(page.locator('aside')).toBeHidden();
+  await expect(page.locator('#grid-overlay path')).toHaveCount(3);
+  await expect(page.locator('#grid-controls')).toBeHidden();
   await page.locator('#exit-focus').click();
   await expect(page.locator('aside')).toBeVisible();
+  await page.locator('#show-grid').uncheck();
+  await expect(page.locator('#grid-overlay path')).toHaveCount(0);
+  await expect(page.locator('#grid')).toBeDisabled();
 });
 
 test('full-resolution export uses the native file and omits preview isolation', async ({ page }) => {
