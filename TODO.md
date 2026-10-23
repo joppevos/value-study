@@ -11,6 +11,8 @@ Relevant tests cover known pixels and image edges. Browser and device validation
 
 ## Focused artist workflow
 
+- [x] Make secondary tools easier to find with a clear label and a visible expand/collapse indicator.
+
 - [x] Add a simple Color view for detail smoothing in color. Keep palette reduction and the smoothing-method selector out of the interface.
 - [x] Add a compact photo value scale with estimated Munsell readings, independent swatch counts, and tap, drag, or keyboard sampling.
 - [x] Keep original comparison, squint, and color sampling together beneath the image with touch-sized buttons.
@@ -92,7 +94,7 @@ Matching adjustment values does not correct differences in exposure or lighting 
 - [x] Offer white, middle gray, and dark preview backgrounds. Keep these separate from transparency compositing.
 - [x] Add a histogram of adjusted grayscale values before grouping. Compute it in the worker after brightness, contrast, and smoothing.
 - [x] Show value boundaries on the histogram and keep their sliders connected to the result.
-- [x] Add a separate Grid section with a show/hide control and a slider for 2 × 2, 3 × 3, and 4 × 4 divisions. Exclude grid lines from samples and exports.
+- [x] Show Off, Center, and Thirds as visible Grid buttons beneath the image. Keep them outside the collapsed tools. Exclude grid lines from samples and exports.
 
 ## Priority 4: Understand color intensity
 

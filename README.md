@@ -33,9 +33,9 @@ You can also use these tools:
 - Adjust value boundaries to change where the groups meet.
 - Use Detail smoothing to remove small details.
 - Open Adjust light & shadow for brightness and contrast.
-- Open Grid beneath the image for 2 × 2, 3 × 3, or 4 × 4 divisions.
+- Select Center or Thirds beside Grid beneath the image.
 - Use Undo, Redo, or Reset to revisit a decision.
-- Open Compare, frame & save for a second photograph, saved variations, and local storage.
+- Open Compare photos & save studies for a second photograph, saved variations, and local storage.
 
 Color view keeps the photograph in color while Detail smoothing removes small details.
 Switch between Color and Value to compare color shapes with light and dark shapes.

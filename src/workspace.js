@@ -44,17 +44,18 @@ export function setupWorkspace(app) {
   $('focus-view').onclick = () => focus(true); exit.onclick = () => focus(false);
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !exit.hidden) focus(false); });
   $('surround').onchange = () => document.querySelector('.comparison-pair').dataset.surround = $('surround').value;
-  function updateGrid() {
-    const divisions = Number($('grid').value), visible = $('show-grid').checked;
-    $('grid').disabled = !visible;
-    $('grid').setAttribute('aria-valuetext', `${divisions} by ${divisions} divisions`);
-    $('grid-count').textContent = `${divisions} × ${divisions}`;
-    $('grid-status').textContent = visible ? `${divisions} × ${divisions}` : 'Off';
-    const positions = visible ? Array.from({ length: divisions - 1 }, (_, i) => (i + 1) * 100 / divisions) : [];
+  function updateGrid(mode = 'none') {
+    $('grid').querySelectorAll('[data-grid]').forEach(button => {
+      const active = button.dataset.grid === mode;
+      button.classList.toggle('active', active); button.setAttribute('aria-pressed', active);
+    });
+    const positions = mode === 'thirds' ? [100 / 3, 200 / 3] : mode === 'center' ? [50] : [];
     $('grid-overlay').innerHTML = positions.map(p => `<path d="M${p} 0V100M0 ${p}H100"/>`).join('');
   }
-  $('grid').oninput = updateGrid;
-  $('show-grid').onchange = updateGrid;
+  $('grid').onclick = event => {
+    const button = event.target.closest('[data-grid]');
+    if (button) updateGrid(button.dataset.grid);
+  };
   updateGrid();
 
   let companion = null, companionWorker = null, companionGeneration = 0, loadGeneration = 0, swapping = false;

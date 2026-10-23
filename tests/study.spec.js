@@ -322,19 +322,18 @@ test('local gallery stores adjustments only by default and persists photos only 
   await expect(page.locator('#save')).toBeDisabled();
 });
 
-test('grid divisions follow the preview without changing pixels or samples', async ({ page }) => {
-  await load(page); await reveal(page, 'grid');
+test('visible Center and Thirds grids leave pixels and samples unchanged', async ({ page }) => {
+  await load(page);
+  await expect(page.locator('#grid-controls')).toBeVisible();
+  await expect(page.locator('.workspace-tools').first()).not.toHaveAttribute('open');
   const before = await page.locator('#preview').evaluate(canvas => canvas.toDataURL());
-  await expect(page.locator('#grid')).toBeDisabled();
-  await page.locator('#show-grid').check();
-  for (const count of [2, 3, 4]) {
-    await range(page, 'grid', count);
-    await expect(page.locator('#grid-count')).toHaveText(`${count} × ${count}`);
-    await expect(page.locator('#grid-status')).toHaveText(`${count} × ${count}`);
-    await expect(page.locator('#grid-overlay path')).toHaveCount(count - 1);
-    const lines = await page.locator('#grid-overlay path').evaluateAll(paths => paths.map(path => path.getAttribute('d')));
-    for (let i = 1; i < count; i++) expect(lines[i - 1]).toBe(`M${i * 100 / count} 0V100M0 ${i * 100 / count}H100`);
-  }
+  await expect(page.locator('[data-grid="none"]')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('[data-grid="center"]').click();
+  await expect(page.locator('#grid-overlay path')).toHaveCount(1);
+  await expect(page.locator('#grid-overlay path')).toHaveAttribute('d', 'M50 0V100M0 50H100');
+  await page.locator('[data-grid="thirds"]').click();
+  await expect(page.locator('[data-grid="thirds"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#grid-overlay path')).toHaveCount(2);
   const aligned = await page.evaluate(() => {
     const image = document.querySelector('#preview').getBoundingClientRect();
     const grid = document.querySelector('#grid-overlay').getBoundingClientRect();
@@ -349,13 +348,13 @@ test('grid divisions follow the preview without changing pixels or samples', asy
   await page.locator('#sample-toggle').click();
   await page.locator('#focus-view').click();
   await expect(page.locator('aside')).toBeHidden();
-  await expect(page.locator('#grid-overlay path')).toHaveCount(3);
+  await expect(page.locator('#grid-overlay path')).toHaveCount(2);
   await expect(page.locator('#grid-controls')).toBeHidden();
   await page.locator('#exit-focus').click();
   await expect(page.locator('aside')).toBeVisible();
-  await page.locator('#show-grid').uncheck();
+  await page.locator('[data-grid="none"]').click();
   await expect(page.locator('#grid-overlay path')).toHaveCount(0);
-  await expect(page.locator('#grid')).toBeDisabled();
+  await expect(page.locator('[data-grid="none"]')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('full-resolution export uses the native file and omits preview isolation', async ({ page }) => {
