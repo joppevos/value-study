@@ -4,6 +4,7 @@ import { sampleArea, compareColors } from './color.js';
 import { studyDefaults } from './study.js';
 import { sanitizeState } from './state.js';
 import { setupWorkspace } from './workspace.js';
+import { setupFullscreen } from './fullscreen.js';
 import { samplePhotoValue, valueScale, nearestValueStep } from './value-scale.js';
 
 const defaults = studyDefaults;
@@ -28,7 +29,8 @@ document.querySelector('#app').innerHTML = `
   <div class="intro"><div><div class="eyebrow">LESS DETAIL. MORE CLARITY.</div><h1>See the bigger picture.</h1><p>Find the light, the dark, and the colors between.</p></div><button class="button upload secondary" aria-label="Open image">${icon} Open image</button></div>
   <div class="workspace">
     <section class="stage" aria-label="Image preview">
-      <div class="stage-top"><span id="image-label">YOUR NEXT STUDY</span><span id="dimensions">A fresh perspective</span><button id="change-image" class="button upload secondary" aria-label="Open another image">${icon} Open image</button></div>
+      <div class="stage-top"><span id="image-label">YOUR NEXT STUDY</span><span id="dimensions">A fresh perspective</span><button id="fullscreen" class="button" disabled aria-expanded="false">Fullscreen</button><button id="change-image" class="button upload secondary" aria-label="Open another image">${icon} Open image</button></div>
+      <div id="painting-toolbar" hidden><div id="painting-values"><span id="painting-values-label">Value groups</span></div><button id="exit-fullscreen" class="button">Exit fullscreen</button></div>
       <div class="comparison-pair"><div class="viewport" id="dropzone">
         <div class="empty"><div class="empty-art" aria-hidden="true"><span></span><span></span><span></span></div><h2>Start with something you see.</h2><p>Your painting, a reference, a little inspiration.<br>Take a photo or drop an image here.</p><div class="empty-actions"><button class="button primary upload">${icon} Choose image</button><button class="button camera">Take a photo</button></div><small>JPG, PNG, WebP & other browser-supported images</small></div>
         <div class="canvas-wrap" hidden><canvas id="preview" tabindex="0" aria-label="Study preview. Enable Sample colors to inspect colors with a tap or keyboard." aria-describedby="sample-help"></canvas><span id="sample-marker" hidden aria-hidden="true"></span><span id="photo-value-badge" hidden></span><svg id="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg></div>
@@ -218,7 +220,7 @@ async function load(file) {
     document.body.classList.add('has-image');
     document.querySelector('.empty').hidden = true;
     document.querySelector('.canvas-wrap').hidden = false;
-    for (const id of ['controls', 'reset', 'compare', 'sample-toggle', 'value-toggle', 'squint']) $(id).disabled = false;
+    for (const id of ['controls', 'reset', 'compare', 'sample-toggle', 'value-toggle', 'squint', 'fullscreen']) $(id).disabled = false;
     $('image-label').textContent = file.name || 'YOUR PHOTO';
     $('dimensions').textContent = `${canvas.width} × ${canvas.height}`;
     $('error').hidden = true;
@@ -246,6 +248,7 @@ function updateControls() {
     button.classList.toggle('active', active); button.setAttribute('aria-pressed', active);
   });
   $('value-controls').hidden = settings.mode !== 'value';
+  $('painting-values').hidden = settings.mode !== 'value';
   $('color-help').hidden = settings.mode !== 'color';
   $('chroma-help').hidden = settings.mode !== 'chroma';
   $('chroma-adjustment').hidden = settings.mode !== 'chroma';
@@ -486,6 +489,14 @@ for (const id of ['modes', 'levels', 'even-boundaries', 'reset', 'flip', 'rotate
   element.addEventListener('click', () => { finishGesture(); before = snapshot(); }, true);
   element.addEventListener('click', () => record(before));
 }
+setupFullscreen(() => {
+  finishGesture();
+  if (sampling) toggleSampling(sampleKind);
+  const wasIsolated = highlightedGroup !== null;
+  highlightedGroup = null;
+  compare(false); squint(false); draw();
+  if (wasIsolated) { updateGroups(); render(); }
+});
 let workspace = setupWorkspace({
   get: () => ({ source, originalFile, state: snapshot(), ready: !!processedImage && finishedId === requestId, processedImage, name: $('image-label').textContent }),
   restore: state => { finishGesture(); const before = snapshot(); restore(state); record(before); },

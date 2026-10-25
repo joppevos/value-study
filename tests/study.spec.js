@@ -346,11 +346,11 @@ test('visible Center and Thirds grids leave pixels and samples unchanged', async
   await page.locator('#sample-toggle').click(); await sample(page, 0.5);
   await expect(page.locator('#sample-cards')).toContainText('#00FF00');
   await page.locator('#sample-toggle').click();
-  await page.locator('#focus-view').click();
+  await page.locator('#fullscreen').click();
   await expect(page.locator('aside')).toBeHidden();
   await expect(page.locator('#grid-overlay path')).toHaveCount(2);
   await expect(page.locator('#grid-controls')).toBeHidden();
-  await page.locator('#exit-focus').click();
+  await page.locator('#exit-fullscreen').click();
   await expect(page.locator('aside')).toBeVisible();
   await page.locator('[data-grid="none"]').click();
   await expect(page.locator('#grid-overlay path')).toHaveCount(0);
@@ -512,4 +512,85 @@ test('samples photo values with a persistent scale independent of value groups',
   await page.locator('#file').setInputFiles(fixture); await ready(page);
   await expect(page.locator('#value-reading')).toContainText('Press or drag');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('fullscreen keeps value switching, comparison, and adjustment history available', async ({ page }) => {
+  await load(page);
+  await page.locator('[data-level="2"]').click(); await ready(page);
+  const small = await page.locator('#preview').boundingBox();
+  await page.locator('#fullscreen').click();
+  await expect(page.locator('#painting-toolbar')).toBeVisible();
+  await expect(page.locator('aside')).toBeHidden();
+  const large = await page.locator('#preview').boundingBox();
+  expect(large.width).toBeGreaterThan(small.width);
+  expect(large.height).toBeGreaterThan(small.height);
+  await page.locator('[data-level="5"]').click(); await ready(page);
+  expect(await pixel(page)).toEqual([64, 64, 64, 255]);
+  await page.locator('[data-level="2"]').click(); await ready(page);
+  expect(await pixel(page)).toEqual([0, 0, 0, 255]);
+  await page.locator('#compare').focus(); await page.keyboard.down('Enter');
+  expect(await pixel(page)).toEqual([255, 0, 0, 255]);
+  await page.keyboard.up('Enter');
+  expect(await pixel(page)).toEqual([0, 0, 0, 255]);
+  await page.locator('#exit-fullscreen').click();
+  await expect(page.locator('#fullscreen')).toBeFocused();
+  await expect(page.locator('#value-controls #levels')).toBeVisible();
+  await page.locator('#undo').click(); await ready(page);
+  await expect(page.locator('[data-level="5"]')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('fullscreen fallback fits portrait and landscape, exits with Escape, and preserves cutoffs', async ({ page }) => {
+  await page.addInitScript(() => {
+    Element.prototype.requestFullscreen = () => Promise.reject(new Error('Fullscreen unavailable'));
+  });
+  await load(page, {
+    name: 'portrait.svg', mimeType: 'image/svg+xml',
+    buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="1200"><path fill="#777" d="M0 0h400v1200H0z"/></svg>'),
+  });
+  await page.locator('[data-level="2"]').click(); await ready(page);
+  await range(page, 'boundary-0', 100);
+  await page.locator('#fullscreen').click();
+  for (const size of [{ width:390, height:844 }, { width:844, height:390 }, { width:820, height:1180 }, { width:1180, height:820 }]) {
+    await page.setViewportSize(size);
+    await expect.poll(async () => {
+      const box = await page.locator('#preview').boundingBox();
+      return box.width > 0 && box.height > 0 && box.x >= 0 && box.y >= 0 && box.x + box.width <= size.width + 1 && box.y + box.height <= size.height + 1;
+    }).toBe(true);
+    const box = await page.locator('#preview').boundingBox();
+    expect(box.width / box.height).toBeCloseTo(1 / 3, 2);
+    const exit = await page.locator('#exit-fullscreen').boundingBox();
+    expect(exit.y + exit.height).toBeLessThanOrEqual(size.height);
+  }
+  await page.locator('[data-level="5"]').click(); await ready(page);
+  await page.locator('[data-level="2"]').click(); await ready(page);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#painting-toolbar')).toBeHidden();
+  await expect(page.locator('#fullscreen')).toBeFocused();
+  await expect(page.locator('#boundary-0')).toHaveValue('100');
+  await page.locator('#fullscreen').click();
+  await expect(page.locator('#painting-toolbar')).toBeVisible();
+  await page.locator('#exit-fullscreen').click();
+  await expect(page.locator('#painting-toolbar')).toBeHidden();
+});
+
+test('fullscreen leaves sampling to show the edited study and preserves Color view', async ({ page }) => {
+  await load(page);
+  await page.locator('[data-level="2"]').click(); await ready(page);
+  await page.locator('#sample-toggle').click();
+  expect(await pixel(page)).toEqual([255, 0, 0, 255]);
+  await page.locator('#fullscreen').click(); await ready(page);
+  expect(await pixel(page)).toEqual([0, 0, 0, 255]);
+  await page.locator('#exit-fullscreen').click();
+  await page.locator('[data-mode="color"]').click(); await ready(page);
+  await page.locator('#fullscreen').click();
+  await expect(page.locator('#painting-values')).toBeHidden();
+  expect(await pixel(page)).toEqual([255, 0, 0, 255]);
+  const native = await page.evaluate(async () => {
+    if (!document.fullscreenElement) return false;
+    await document.exitFullscreen(); return true;
+  });
+  // Fallback browsers use the visible exit instead of native fullscreen events.
+  if (native) await expect(page.locator('#painting-toolbar')).toBeHidden();
+  else await page.locator('#exit-fullscreen').click();
+  await expect(page.locator('[data-mode="color"]')).toHaveAttribute('aria-pressed', 'true');
 });

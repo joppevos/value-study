@@ -90,7 +90,7 @@ Matching adjustment values does not correct differences in exposure or lighting 
 - [x] Use a compact study layout on phone and tablet widths once a photo opens. Hide branding and introductory text, retain Open image, and reduce preview padding.
 
 - [x] Keep sampling, original comparison, and export consistent with horizontal flip and other framing changes.
-- [x] Add a view that hides controls, with a visible exit and Escape support.
+- [x] Add fullscreen painting view with value-group switching, original comparison, squint, a visible exit, and Escape support. Fill the browser viewport when native fullscreen is unavailable.
 - [x] Offer white, middle gray, and dark preview backgrounds. Keep these separate from transparency compositing.
 - [x] Add a histogram of adjusted grayscale values before grouping. Compute it in the worker after brightness, contrast, and smoothing.
 - [x] Show value boundaries on the histogram and keep their sliders connected to the result.
