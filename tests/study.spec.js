@@ -419,8 +419,6 @@ test('puts the photograph first on compact screens while keeping image replaceme
   const compact = page.viewportSize().width <= 1100;
   if (compact) {
     await expect(page.locator('header')).toBeHidden();
-    await expect(page.locator('.intro')).toBeHidden();
-    await expect(page.locator('footer')).toBeHidden();
     await expect(page.locator('#change-image')).toBeVisible();
     const layout = await page.evaluate(() => {
       const image = document.querySelector('#preview').getBoundingClientRect();
@@ -440,8 +438,8 @@ test('puts the photograph first on compact screens while keeping image replaceme
     await expect(page.locator('#change-image')).toBeVisible();
   } else {
     await expect(page.locator('header')).toBeVisible();
-    await expect(page.locator('.intro')).toBeVisible();
-    await expect(page.locator('#change-image')).toBeHidden();
+    await expect(page.locator('.intro')).toHaveCount(0);
+    await expect(page.locator('#change-image')).toBeVisible();
   }
 });
 

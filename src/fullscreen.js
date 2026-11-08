@@ -4,7 +4,7 @@ export function setupFullscreen(beforeEnter) {
   const stage = document.querySelector('.stage');
   const viewport = $('dropzone'), canvas = $('preview');
   const wrap = canvas.parentElement;
-  const peek = $('color-peek'), peekHome = peek.parentElement, peekNext = peek.nextSibling;
+  const peek = $('color-peek');
   const levels = $('levels'), home = levels.parentElement, next = levels.nextSibling;
   let active = false, requesting = false, scrollY = 0;
 
@@ -24,7 +24,6 @@ export function setupFullscreen(beforeEnter) {
     if (!active) return;
     active = false;
     home.insertBefore(levels, next);
-    peekHome.insertBefore(peek, peekNext);
     peek.hidden = $('sample-toggle').getAttribute('aria-pressed') !== 'true';
     document.body.classList.remove('painting-view');
     $('painting-toolbar').hidden = true;
@@ -45,7 +44,6 @@ export function setupFullscreen(beforeEnter) {
     if (active || requesting || $('fullscreen').disabled) return;
     scrollY = window.scrollY;
     beforeEnter(); active = true;
-    stage.insertBefore(peek, document.querySelector('.stage-bottom'));
     peek.hidden = false;
     $('painting-values').append(levels);
     $('painting-toolbar').hidden = false;
