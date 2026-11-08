@@ -4,6 +4,7 @@ export function setupFullscreen(beforeEnter) {
   const stage = document.querySelector('.stage');
   const viewport = $('dropzone'), canvas = $('preview');
   const wrap = canvas.parentElement;
+  const peek = $('color-peek'), peekHome = peek.parentElement, peekNext = peek.nextSibling;
   const levels = $('levels'), home = levels.parentElement, next = levels.nextSibling;
   let active = false, requesting = false, scrollY = 0;
 
@@ -23,6 +24,8 @@ export function setupFullscreen(beforeEnter) {
     if (!active) return;
     active = false;
     home.insertBefore(levels, next);
+    peekHome.insertBefore(peek, peekNext);
+    peek.hidden = $('sample-toggle').getAttribute('aria-pressed') !== 'true';
     document.body.classList.remove('painting-view');
     $('painting-toolbar').hidden = true;
     $('fullscreen').setAttribute('aria-expanded', 'false');
@@ -42,6 +45,8 @@ export function setupFullscreen(beforeEnter) {
     if (active || requesting || $('fullscreen').disabled) return;
     scrollY = window.scrollY;
     beforeEnter(); active = true;
+    stage.insertBefore(peek, document.querySelector('.stage-bottom'));
+    peek.hidden = false;
     $('painting-values').append(levels);
     $('painting-toolbar').hidden = false;
     document.body.classList.add('painting-view');
@@ -66,7 +71,7 @@ export function setupFullscreen(beforeEnter) {
     if (!active) return;
     if (event.key === 'Escape') { event.preventDefault(); exit(); }
     if (event.key !== 'Tab') return;
-    const buttons = [...stage.querySelectorAll('button:not(:disabled), canvas[tabindex]')]
+    const buttons = [...stage.querySelectorAll('button:not(:disabled), select:not(:disabled), canvas[tabindex]')]
       .filter(element => element.getClientRects().length);
     const first = buttons[0], last = buttons.at(-1);
     if (event.shiftKey && (document.activeElement === first || !stage.contains(document.activeElement))) {

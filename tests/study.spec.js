@@ -594,3 +594,37 @@ test('fullscreen leaves sampling to show the edited study and preserves Color vi
   else await page.locator('#exit-fullscreen').click();
   await expect(page.locator('[data-mode="color"]')).toHaveAttribute('aria-pressed', 'true');
 });
+
+test('fullscreen inspects colors on press with the reading and image visible together', async ({ page, isMobile }) => {
+  await load(page);
+  await page.locator('#fullscreen').click();
+  await expect(page.locator('#color-peek')).toContainText('Press or drag');
+  if (isMobile) {
+    const box = await page.locator('#preview').boundingBox();
+    await page.touchscreen.tap(box.x + box.width / 6, box.y + box.height / 2);
+  } else {
+    await sample(page, 1 / 6);
+    const box = await page.locator('#preview').boundingBox();
+    await page.mouse.move(box.x + box.width / 6, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator('#peek-color')).toContainText('#00FF00');
+    await page.mouse.move(box.x + box.width / 6, box.y + box.height / 2);
+    await page.mouse.up();
+  }
+  await expect(page.locator('#peek-color')).toContainText('#FF0000');
+  await expect(page.locator('#sample-toggle')).toHaveAttribute('aria-pressed', 'true');
+  await sample(page, 5 / 6);
+  await expect(page.locator('#peek-color')).toContainText('#0000FF');
+  const canvas = await page.locator('#preview').boundingBox();
+  const peek = await page.locator('#color-peek').boundingBox();
+  const viewport = page.viewportSize();
+  expect(peek.y).toBeGreaterThanOrEqual(canvas.y + canvas.height);
+  expect(peek.y + peek.height).toBeLessThanOrEqual(viewport.height);
+  await page.locator('#peek-source').selectOption('study');
+  await expect(page.locator('#peek-color')).toContainText('#121212');
+  await page.locator('#sample-toggle').click();
+  await expect(page.locator('#peek-color')).toContainText('Press or drag');
+  await page.locator('#exit-fullscreen').click();
+  await expect(page.locator('#color-peek')).toBeHidden();
+});

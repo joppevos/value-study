@@ -34,11 +34,18 @@ document.querySelector('#app').innerHTML = `
       <div class="comparison-pair"><div class="viewport" id="dropzone">
         <div class="empty"><div class="empty-art" aria-hidden="true"><span></span><span></span><span></span></div><h2>Start with something you see.</h2><p>Your painting, a reference, a little inspiration.<br>Take a photo or drop an image here.</p><div class="empty-actions"><button class="button primary upload">${icon} Choose image</button><button class="button camera">Take a photo</button></div><small>JPG, PNG, WebP & other browser-supported images</small></div>
         <div class="canvas-wrap" hidden><canvas id="preview" tabindex="0" aria-label="Study preview. Enable Sample colors to inspect colors with a tap or keyboard." aria-describedby="sample-help"></canvas><span id="sample-marker" hidden aria-hidden="true"></span><span id="photo-value-badge" hidden></span><svg id="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+        <div id="color-peek" class="color-peek" role="status" aria-live="polite" hidden><span id="peek-swatch" class="peek-swatch" aria-hidden="true"></span><div><strong id="peek-color">Press or drag to inspect a color</strong><span id="peek-reading">Photo color · averaged over a small area</span></div><label>Sample from<select id="peek-source" aria-label="Quick sample source"><option value="original">Original photo</option><option value="study">Processed study</option></select></label></div>
         <div id="busy" hidden>Developing your study…</div>
       </div>
       <section id="companion" class="companion" hidden aria-label="Second image"><h2 id="companion-label">Painting</h2><canvas id="companion-preview" aria-label="Second study"></canvas><p id="companion-status" role="status"></p></section></div>
       <div class="stage-bottom"><span id="status" role="status" aria-live="polite">A little distance can change how you see.</span></div>
       <div class="sample-toolbar" role="group" aria-label="Observe and compare"><button id="compare" class="button" disabled>Hold to see original</button><button id="squint" class="button" disabled aria-pressed="false">Hold to squint</button><button id="value-toggle" class="button" aria-pressed="false" disabled>Sample value</button><button id="sample-toggle" class="button" aria-pressed="false" disabled>⊙ Sample colors</button><span id="sample-help">Compare colors from a small area, not a single pixel.</span></div>
+      <section id="sampler" class="sampler" aria-label="Color comparison" hidden>
+        <div class="sample-heading"><div><h2>Look closer.</h2><p>Tap the image. Pin A, then choose B.</p></div><label class="sample-source-label" for="sample-source">Sample from<select id="sample-source"><option value="original">Original photo</option><option value="study">Processed study</option></select></label></div>
+        <p class="sample-note">The preview shows your sample source while sampling. Use arrow keys to move and Enter to sample. Each sample averages up to 5 × 5 pixels.</p>
+        <div class="sample-layout"><div><div id="sample-cards" class="sample-cards"></div><div class="sample-actions"><button id="pin" class="button" disabled>Pin as A</button><button id="clear-samples" class="text-button">Clear samples</button></div><p id="sample-comparison" class="sample-comparison" role="status" aria-live="polite"></p></div><div class="wheel-area"><div class="color-wheel" role="img" aria-label="Hue wheel. Marker angle shows OKLCH hue. Distance from the center shows color intensity."><div class="wheel-center"></div><span id="wheel-a" class="wheel-marker" hidden>A</span><span id="wheel-b" class="wheel-marker" hidden>B</span></div><p>Hue around the wheel.<br>Muted colors near the center.</p></div></div>
+        <p class="sample-note">Value matches our grayscale view (0–100). Chroma means color intensity and uses OKLCH, a perceptual color model. Samples describe the photo, not paint mixtures.</p>
+      </section>
       <section id="value-sampler" class="value-sampler" aria-label="Photo value scale" hidden>
         <div class="value-sample-heading"><h2>Photo value</h2><label for="value-source">Sample from<select id="value-source"><option value="original">Original photo</option><option value="study">Processed study</option></select></label></div>
         <p id="value-reading" role="status" aria-live="polite">Press or drag on the image to sample a small area.</p>
@@ -48,12 +55,6 @@ document.querySelector('#app').innerHTML = `
       </section>
       <div id="grid-controls" class="grid-tools"><span id="grid-label">Grid</span><div id="grid" class="segments" role="group" aria-labelledby="grid-label"><button data-grid="none" aria-pressed="true" class="active">Off</button><button data-grid="center" aria-pressed="false">Center</button><button data-grid="thirds" aria-pressed="false">Thirds</button></div></div>
       <details class="workspace-tools"><summary>Compare photos & save studies</summary><div id="workspace-tools"></div></details>
-      <section id="sampler" class="sampler" aria-label="Color comparison" hidden>
-        <div class="sample-heading"><div><h2>Look closer.</h2><p>Tap the image. Pin A, then choose B.</p></div><label class="sample-source-label" for="sample-source">Sample from<select id="sample-source"><option value="original">Original photo</option><option value="study">Processed study</option></select></label></div>
-        <p class="sample-note">The preview shows your sample source while sampling. Use arrow keys to move and Enter to sample. Each sample averages up to 5 × 5 pixels.</p>
-        <div class="sample-layout"><div><div id="sample-cards" class="sample-cards"></div><div class="sample-actions"><button id="pin" class="button" disabled>Pin as A</button><button id="clear-samples" class="text-button">Clear samples</button></div><p id="sample-comparison" class="sample-comparison" role="status" aria-live="polite"></p></div><div class="wheel-area"><div class="color-wheel" role="img" aria-label="Hue wheel. Marker angle shows OKLCH hue. Distance from the center shows color intensity."><div class="wheel-center"></div><span id="wheel-a" class="wheel-marker" hidden>A</span><span id="wheel-b" class="wheel-marker" hidden>B</span></div><p>Hue around the wheel.<br>Muted colors near the center.</p></div></div>
-        <p class="sample-note">Value matches our grayscale view (0–100). Chroma means color intensity and uses OKLCH, a perceptual color model. Samples describe the photo, not paint mixtures.</p>
-      </section>
     </section>
     <aside>
       <div class="panel-heading"><h2>Study the shapes</h2><button id="reset" disabled>Reset</button></div>
@@ -374,13 +375,13 @@ function toggleSampling(kind) {
   canvas.classList.toggle('sampling', sampling);
   canvas.setAttribute('aria-label', sampling ? 'Sample the image. Press or drag to sample. Arrow keys move the sample point. Enter samples the selected area.' : 'Study preview. Enable Sample colors or Sample value to inspect the image.');
   $('sample-marker').hidden = !sampling || !samplePoint;
-  updateValueScale(); draw();
+  updateSamples(); draw();
 }
 $('sample-toggle').onclick = () => toggleSampling('color');
 $('value-toggle').onclick = () => toggleSampling('value');
-for (const id of ['sample-source', 'value-source']) $(id).onchange = event => {
+for (const id of ['sample-source', 'value-source', 'peek-source']) $(id).onchange = event => {
   sampleSource = event.target.value;
-  $('sample-source').value = sampleSource; $('value-source').value = sampleSource;
+  $('sample-source').value = sampleSource; $('value-source').value = sampleSource; $('peek-source').value = sampleSource;
   if (samplePoint) takeSample();
   draw();
 };
@@ -420,6 +421,7 @@ function sampleAt(event) {
 }
 canvas.onclick = sampleAt;
 canvas.onpointerdown = event => {
+  if (document.body.classList.contains('painting-view') && !sampling && source && event.button === 0 && event.isPrimary) toggleSampling('color');
   if (!sampling || !source || event.button !== 0 || !event.isPrimary) return;
   event.preventDefault(); canvas.focus({ preventScroll: true });
   samplePointer = event.pointerId; canvas.setPointerCapture(event.pointerId); sampleAt(event);
@@ -451,6 +453,11 @@ function sampleCard(sample, label, placeholder) {
 }
 function updateSamples() {
   updateValueScale();
+  $('color-peek').hidden = (!sampling || sampleKind !== 'color') && !document.body.classList.contains('painting-view');
+  const peekSample = sampling && sampleKind === 'color' ? currentSample : null;
+  $('peek-swatch').style.background = peekSample?.hex ?? 'transparent';
+  $('peek-color').textContent = peekSample ? `${peekSample.hex.toUpperCase()} · ${peekSample.origin === 'Original' ? 'Original photo' : 'Processed study'}` : 'Press or drag to inspect a color';
+  $('peek-reading').textContent = peekSample ? `Hue ${peekSample.hue === null ? 'neutral' : `${Math.round(peekSample.hue)}°`} · Chroma ${peekSample.chroma.toFixed(3)} · Value ${peekSample.value.toFixed(1)} / 100` : 'Photo color · averaged over a small area';
   $('sample-cards').innerHTML = sampleCard(pinnedSample, 'A', 'Pin a color to compare.') + sampleCard(currentSample, 'B', 'Tap the image to sample.');
   $('pin').disabled = !currentSample;
   $('sample-comparison').textContent = pinnedSample && currentSample ? compareColors(pinnedSample, currentSample) : 'Sample the lights, shadows, or a color that feels hard to judge.';

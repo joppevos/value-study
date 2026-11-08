@@ -201,7 +201,7 @@ body.painting-view .stage {
 body.painting-view .stage-top, body.painting-view .stage-bottom,
 body.painting-view .workspace-tools, body.painting-view .sampler,
 body.painting-view .value-sampler, body.painting-view .grid-tools,
-body.painting-view #value-toggle, body.painting-view #sample-toggle,
+body.painting-view #value-toggle,
 body.painting-view #sample-help { display:none!important; }
 #painting-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 12px; flex-shrink:0; }
 #painting-values { display:flex; align-items:center; gap:12px; min-width:0; }
@@ -225,3 +225,25 @@ body.painting-view .sample-toolbar .button { flex:1; min-height:44px; }
   #painting-values #levels button { padding:6px 2px; }
   #exit-fullscreen { grid-area:1 / 2; }
 }
+
+/* Keep the sampled color beside the photograph, including fullscreen. */
+.color-peek { position:absolute; bottom:12px; left:12px; right:12px; z-index:2; display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#fbfbf7; box-shadow:0 2px 12px #21251c18; pointer-events:none; }
+.peek-swatch { width:48px; height:48px; flex-shrink:0; border:1px solid #30352e33; border-radius:4px; }
+.color-peek strong { display:block; font-size:13px; font-weight:550; }
+.color-peek #peek-reading { display:block; font-size:11px; margin-top:5px; line-height:1.5; }
+.color-peek label { margin-left:auto; font-size:10px; display:grid; gap:3px; pointer-events:auto; }
+.color-peek select { min-height:44px; font:inherit; font-size:12px; max-width:145px; }
+body.painting-view #preview { touch-action:none; cursor:crosshair; }
+@media(max-width:650px) {
+  .color-peek { gap:8px; left:8px; right:8px; bottom:8px; padding:8px; flex-wrap:wrap; }
+  .color-peek > div { flex:1; min-width:0; }
+  .color-peek label { display:flex; align-items:center; gap:8px; }
+  .color-peek strong { font-size:12px; }
+}
+
+body.painting-view .color-peek { position:static; flex-shrink:0; margin:0 8px; box-shadow:none; pointer-events:auto; }
+
+/* A neutral middle gray gives photographs a consistent viewing surround. */
+body.has-image .comparison-pair:not([data-surround]),
+body.has-image .comparison-pair:not([data-surround]) .viewport { background:#808080; box-shadow:none; }
+body.has-image .comparison-pair canvas { box-shadow:none; }
